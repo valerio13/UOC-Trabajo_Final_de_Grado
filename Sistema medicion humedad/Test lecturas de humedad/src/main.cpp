@@ -1,37 +1,41 @@
 #include <Arduino.h>
 
-const int potPin = 34;
+const int humRaw = 34;
 
 // variable for storing the potentiometer value
-int potValue = 0;
-int pos = 0;
+int humAverage = 0;
+int minAverage = 1360;
+int maxAverage = 3360;
 
 int minValue = 9999;
 int maxValue;
 
-const int NUM_VALORES =
+const int VALUES_NUM =
     10; // Constante que define el número de valores que se promediarán
-int valores[NUM_VALORES]; // Array que almacena los valores
-int indice = 0; // Índice del array donde se almacenará el siguiente valor
-int suma = 0;   // Variable que almacena la suma de los valores
+int values[VALUES_NUM]; // Array que almacena los valores
+int averageIndex = 0; // Índice del array donde se almacenará el siguiente valor
+int sum = 0;          // Variable que almacena la suma de los valores
+bool isAverageValid =
+    false; // Variable que indica cuando la media ha comenzado a ser válida
 
-int getMedia(int newValue) {
-  valores[indice] = newValue; // Almacenamiento del valor en el array
-  indice++;                   // Incremento del índice para el siguiente valor
+int getAverage(int newValue) {
+  values[averageIndex] = newValue; // Almacenamiento del valor en el array
+  averageIndex++; // Incremento del índice para el siguiente valor
 
-  if (indice >= NUM_VALORES) { // Si se han almacenado todos los valores
-    indice = 0;                // Reinicio del índice para volver a empezar
+  if (averageIndex >= VALUES_NUM) { // Si se han almacenado todos los valores
+    averageIndex = 0; // Reinicio del índice para volver a empezar
+    isAverageValid = true;
   }
 
-  suma = 0; // Reinicio de la variable que almacena la suma de los valores
+  sum = 0; // Reinicio de la variable que almacena la suma de los valores
 
-  for (int i = 0; i < NUM_VALORES;
-       i++) {           // Bucle que recorre todos los valores del array
-    suma += valores[i]; // Acumulación de los valores en la variable suma
+  for (int i = 0; i < VALUES_NUM;
+       i++) {         // Bucle que recorre todos los valores del array
+    sum += values[i]; // Acumulación de los valores en la variable suma
   }
 
-  int media = suma / NUM_VALORES;
-  return media;
+  int average = sum / VALUES_NUM;
+  return average;
 }
 
 void setup() {
@@ -40,24 +44,24 @@ void setup() {
 }
 
 void loop() {
-  int inRead = analogRead(potPin);
+  int humRead = analogRead(humRaw);
 
-  potValue = getMedia(inRead);
-  Serial.print("potValue: ");
-  Serial.println(potValue);
+  humAverage = getAverage(humRead);
 
-  pos = map(potValue, 0, 4095, 0, 180);
-  Serial.println(pos);
-  if (pos > 180) {
-    pos = 180;
-  } else if (pos < 0) {
-    pos = 0;
+  if (isAverageValid) {
+    minValue = min(humAverage, minValue);
+    maxValue = max(humAverage, maxValue);
   }
-  Serial.println(pos);
 
-  minValue = min(potValue, minValue);
-  maxValue = max(potValue, maxValue);
+  Serial.print("raw;average;min;max;");
+  Serial.print(humRead);
+  Serial.print(";");
+  Serial.print(humAverage);
+  Serial.print(";");
+  Serial.print(minValue);
+  Serial.print(";");
+  Serial.print(maxValue);
 
   Serial.println("");
-  delay(500);
+  delay(5000);
 }
