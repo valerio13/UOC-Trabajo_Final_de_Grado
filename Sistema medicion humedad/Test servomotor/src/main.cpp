@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <ESP32Servo.h>
 
-const int potPin = 34;
 const int servoPin = 18;
 
 Servo servo;
