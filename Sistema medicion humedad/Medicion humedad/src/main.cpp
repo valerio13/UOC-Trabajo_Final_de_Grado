@@ -7,7 +7,6 @@
 
 #include <sstream>
 #include <string>
-#include <sys/time.h>
 
 // Definición de UUID para la característica de humedad
 #define HUMIDITY_SERVICE_UUID "0000181A-0000-1000-8000-00805F9B34FB"
@@ -33,8 +32,8 @@ Servo servo;
 int pos = 0;
 
 // Variables para el cálculo de la humedad
-int minAverage = 1360.0;
-int maxAverage = 3360.0;
+int minAverage = 1300.0;
+int maxAverage = 3400.0;
 int humAverage = 0.0;
 int humPercentAverage = 0.0;
 
@@ -75,30 +74,47 @@ class HumidityCallback : public BLECharacteristicCallbacks {
 };
 
 class MinHumidityCallback : public BLECharacteristicCallbacks {
-  void onWrite(BLECharacteristic *characteristic) {
-    std::string value = characteristic->getValue();
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    std::string value = pCharacteristic->getValue();
 
     if (value.length() > 0) {
       Serial.print("MinHumidityCallback: ");
-      for (int i = 0; i < value.length(); i++)
-        Serial.print(value[i]);
-
-      Serial.println("*********");
+      for (int i = 0; i < value.length(); i++) {
+        Serial.println(value[i]);
+      }
+      Serial.println("");
     }
+  }
+
+  void onRead(BLECharacteristic *pCharacteristic) {
+    std::ostringstream os; // crea un str stream
+    os << "MinHumidity: "
+       << minAverage;            // pone en os un string y el valor de humedad
+    std::string str1 = os.str(); // convierte os en string
+    Serial.println(str1.c_str());
+    pCharacteristic->setValue(os.str());
   }
 };
 
 class MaxHumidityCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *characteristic) {
     std::string value = characteristic->getValue();
-
     if (value.length() > 0) {
       Serial.print("MaxHumidityCallback: ");
-      for (int i = 0; i < value.length(); i++)
-        Serial.print(value[i]);
-
-      Serial.println("*********");
+      for (int i = 0; i < value.length(); i++) {
+        Serial.println(value[i]);
+      }
+      Serial.println("");
     }
+  }
+
+  void onRead(BLECharacteristic *pCharacteristic) {
+    std::ostringstream os; // crea un str stream
+    os << "MaxHumidity: "
+       << maxAverage;            // pone en os un string y el valor de humedad
+    std::string str1 = os.str(); // convierte os en string
+    Serial.println(str1.c_str());
+    pCharacteristic->setValue(os.str());
   }
 };
 
@@ -125,13 +141,15 @@ void bleSetup() {
 
   // Caracteristica de calibrar humedad mínima
   BLECharacteristic *minHumidityCharacteristic = pService->createCharacteristic(
-      MIN_HUMIDITY_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE);
+      MIN_HUMIDITY_CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
   minHumidityCharacteristic->addDescriptor(new BLE2902());
   minHumidityCharacteristic->setCallbacks(new MinHumidityCallback());
 
   // Caracteristica de calibrar humedad máxima
   BLECharacteristic *maxHumidityCharacteristic = pService->createCharacteristic(
-      MAX_HUMIDITY_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_WRITE);
+      MAX_HUMIDITY_CHARACTERISTIC_UUID,
+      BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
   maxHumidityCharacteristic->addDescriptor(new BLE2902());
   maxHumidityCharacteristic->setCallbacks(new MaxHumidityCallback());
 
