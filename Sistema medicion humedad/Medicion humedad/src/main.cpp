@@ -8,6 +8,8 @@
 #include <sstream>
 #include <string>
 
+#include <Preferences.h>
+
 // Definición de UUID para la característica de humedad
 #define HUMIDITY_SERVICE_UUID "0000181A-0000-1000-8000-00805F9B34FB"
 
@@ -32,10 +34,10 @@ Servo servo;
 int pos = 0;
 
 // Variables para el cálculo de la humedad
-int minAverage = 1300.0;
-int maxAverage = 3400.0;
-int humAverage = 0.0;
-int humPercentAverage = 0.0;
+int minHumidity;
+int maxHumidity;
+int humAverage = 0;
+int humPercentAverage = 0;
 
 const int NUM_VALORES =
     10; // Constante que define el número de valores que se promediarán
@@ -48,6 +50,10 @@ BLECharacteristic *pHumidityCharacteristic;
 
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
+
+const char startCalibrationChar = '1';
+
+Preferences preferences;
 
 class MyServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *server) {
@@ -76,20 +82,23 @@ class HumidityCallback : public BLECharacteristicCallbacks {
 class MinHumidityCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     std::string value = pCharacteristic->getValue();
-
     if (value.length() > 0) {
       Serial.print("MinHumidityCallback: ");
-      for (int i = 0; i < value.length(); i++) {
-        Serial.println(value[i]);
+      Serial.println(value.c_str());
+
+      if (value[0] == startCalibrationChar) {
+        calibratingMin = true;
+      } else if (value[0] == 's') {
+        // guardar la calibración
+        preferences.putInt("minHumidity", minHumidity);
       }
-      Serial.println("");
     }
   }
 
   void onRead(BLECharacteristic *pCharacteristic) {
     std::ostringstream os; // crea un str stream
     os << "MinHumidity: "
-       << minAverage;            // pone en os un string y el valor de humedad
+       << minHumidity;           // pone en os un string y el valor de humedad
     std::string str1 = os.str(); // convierte os en string
     Serial.println(str1.c_str());
     pCharacteristic->setValue(os.str());
@@ -101,17 +110,21 @@ class MaxHumidityCallback : public BLECharacteristicCallbacks {
     std::string value = characteristic->getValue();
     if (value.length() > 0) {
       Serial.print("MaxHumidityCallback: ");
-      for (int i = 0; i < value.length(); i++) {
-        Serial.println(value[i]);
+      Serial.println(value.c_str());
+
+      if (value[0] == startCalibrationChar) {
+        calibratingMax = true;
+      } else if (value[0] == 's') {
+        // guardar la calibración
+        preferences.putInt("maxHumidity", maxHumidity);
       }
-      Serial.println("");
     }
   }
 
   void onRead(BLECharacteristic *pCharacteristic) {
     std::ostringstream os; // crea un str stream
     os << "MaxHumidity: "
-       << maxAverage;            // pone en os un string y el valor de humedad
+       << maxHumidity;           // pone en os un string y el valor de humedad
     std::string str1 = os.str(); // convierte os en string
     Serial.println(str1.c_str());
     pCharacteristic->setValue(os.str());
@@ -191,21 +204,54 @@ float getMedia(int newValue) {
   return average;
 }
 
+void getHumidityRead() {
+  int inRead = analogRead(humSensorPin);
+  humAverage = getMedia(inRead);
+  Serial.println(inRead);
+}
+
+void calibrateMinHumidity() {
+  minHumidity = 99999;
+  for (int i = 0; i < 20; i++) {
+    int inRead = analogRead(humSensorPin);
+    Serial.println(inRead);
+    minHumidity = min(inRead, minHumidity);
+    delay(1000);
+  }
+}
+
+void calibrateMaxHumidity() {
+  maxHumidity = 0;
+  for (int i = 0; i < 20; i++) {
+    int inRead = analogRead(humSensorPin);
+    Serial.println(inRead);
+    maxHumidity = max(inRead, maxHumidity);
+    delay(1000);
+  }
+}
+
 void setup() {
   servo.attach(servoPin, 500, 2400);
   bleSetup();
+
+  for (int i = 0; i < NUM_VALORES; i++) {
+    getHumidityRead();
+  }
+
+  preferences.begin("my-app",
+                    false); // inicializar preferences con el nombre "my-app"
+
+  minHumidity = preferences.getInt("minHumidity", 1300);
+  maxHumidity = preferences.getInt("maxHumidity", 3400);
 
   Serial.begin(921600);
   delay(1000);
 }
 
 void loop() {
-  int inRead = analogRead(humSensorPin);
+  getHumidityRead();
 
-  humAverage = getMedia(inRead);
   Serial.print("humidity: ");
-  Serial.print(inRead);
-  Serial.print(",");
   Serial.println(humAverage);
 
   pos = map(humAverage, 0, 4095, 0, 180);
@@ -217,9 +263,7 @@ void loop() {
 
   servo.write(pos);
 
-  minAverage = min(humAverage, minAverage);
-  maxAverage = max(humAverage, maxAverage);
-  humPercentAverage = map(humAverage, maxAverage, minAverage, 0, 100);
+  humPercentAverage = map(humAverage, maxHumidity, minHumidity, 0, 100);
   if (humPercentAverage < 0) {
     humPercentAverage = 0;
   } else if (humPercentAverage > 100) {
@@ -227,36 +271,25 @@ void loop() {
   }
   Serial.println("");
 
-  bleLoop();
+  if (calibratingMin) {
+    Serial.println("Calibrando valor de humedad mínima...");
+    calibrateMinHumidity();
+    Serial.println("Calibración completada");
+    calibratingMin = false;
+  } else if (calibratingMax) {
+    Serial.println("Calibrando valor de humedad máxima...");
+    calibrateMaxHumidity();
+    Serial.println("Calibración completada");
+    calibratingMax = false;
+  } else {
+    bleLoop();
+  }
 
   delay(1000);
-  /*
-    if (calibratingMin) {
-      // Código para calibrar el valor de humedad mínima
-      // ...
-      Serial.println("Calibrando valor de humedad mínima...");
-      delay(5000);
-      Serial.println("Calibración completada");
-      calibratingMin = false;
-    } else if (calibratingMax) {
-      // Código para calibrar el valor de humedad máxima
-      // ...
-      Serial.println("Calibrando valor de humedad máxima...");
-      delay(5000);
-      Serial.println("Calibración completada");
-      calibratingMax = false;
-    } else {
-      // Actualización de la humedad y notificación BLE
-      // humidity = readHumidity();
-      // humidityCharacteristic.setValue(humidity);
-      // BLE.poll();
-    }
-    */
 }
 
 /*
 TODO:
-- añadir la calibración
 - guardar la calibración
 - dividir el código en distintos ficheros
 */
