@@ -1,6 +1,6 @@
 #include <Arduino.h>
 
-const int humRaw = 34;
+const int humRaw = 32;
 
 // variable for storing the potentiometer value
 int humAverage = 0;

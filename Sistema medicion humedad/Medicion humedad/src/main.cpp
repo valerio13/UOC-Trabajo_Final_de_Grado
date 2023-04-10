@@ -22,7 +22,7 @@
 // Definición de UUID para la característica de calibración de humedad máxima
 #define MAX_HUMIDITY_CHARACTERISTIC_UUID "292f129c-f94f-4c8b-91b3-3f3a17f2ba0d"
 
-const int humSensorPin = 34;
+const int humSensorPin = 32;
 const int servoPin = 18;
 
 bool calibratingMin = false;
@@ -290,6 +290,5 @@ void loop() {
 
 /*
 TODO:
-- guardar la calibración
 - dividir el código en distintos ficheros
 */
