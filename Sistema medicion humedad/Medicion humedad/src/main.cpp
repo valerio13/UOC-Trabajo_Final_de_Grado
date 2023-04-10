@@ -5,6 +5,10 @@
 #include <BLEUtils.h>
 #include <ESP32Servo.h>
 
+#include <sstream>
+#include <string>
+#include <sys/time.h>
+
 // Definición de UUID para la característica de humedad
 #define HUMIDITY_SERVICE_UUID "0000181A-0000-1000-8000-00805F9B34FB"
 
@@ -29,10 +33,10 @@ Servo servo;
 int pos = 0;
 
 // Variables para el cálculo de la humedad
-float minAverage = 1360.0;
-float maxAverage = 3360.0;
-float humAverage = 0.0;
-float humPercentAverage = 0.0;
+int minAverage = 1360.0;
+int maxAverage = 3360.0;
+int humAverage = 0.0;
+int humPercentAverage = 0.0;
 
 const int NUM_VALORES =
     10; // Constante que define el número de valores que se promediarán
@@ -59,26 +63,41 @@ class MyServerCallbacks : public BLEServerCallbacks {
 };
 
 // Declarar las funciones de callback
+class HumidityCallback : public BLECharacteristicCallbacks {
+  void onRead(BLECharacteristic *pCharacteristic) {
+    std::ostringstream os; // crea un str stream
+    os << "Humidity: "
+       << humPercentAverage;     // pone en os un string y el valor de humedad
+    std::string str1 = os.str(); // convierte os en string
+    Serial.println(str1.c_str());
+    pCharacteristic->setValue(os.str());
+  }
+};
+
 class MinHumidityCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *characteristic) {
-    Serial.print("MinHumidityCallback: ");
     std::string value = characteristic->getValue();
-    Serial.println("value");
-    bool calibrateMin = value[0];
-    if (calibrateMin) {
-      calibratingMin = true;
+
+    if (value.length() > 0) {
+      Serial.print("MinHumidityCallback: ");
+      for (int i = 0; i < value.length(); i++)
+        Serial.print(value[i]);
+
+      Serial.println("*********");
     }
   }
 };
 
 class MaxHumidityCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *characteristic) {
-    Serial.print("MaxHumidityCallback: ");
     std::string value = characteristic->getValue();
-    Serial.println("value");
-    bool calibrateMax = value[0];
-    if (calibrateMax) {
-      calibratingMax = true;
+
+    if (value.length() > 0) {
+      Serial.print("MaxHumidityCallback: ");
+      for (int i = 0; i < value.length(); i++)
+        Serial.print(value[i]);
+
+      Serial.println("*********");
     }
   }
 };
@@ -101,10 +120,8 @@ void bleSetup() {
       HUMIDITY_CHARACTERISTIC_UUID,
       BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
   pHumidityCharacteristic->addDescriptor(new BLE2902());
-  // pHumidityCharacteristic->addDescriptor(
-  //     new BLEDescriptor(BLEUUID((uint16_t)0x2901)));
-  // pHumidityCharacteristic->addDescriptor(
-  //     new BLEDescriptor(BLEUUID((uint16_t)0x2904)));
+  pHumidityCharacteristic->setValue("Humidity");
+  pHumidityCharacteristic->setCallbacks(new HumidityCallback());
 
   // Caracteristica de calibrar humedad mínima
   BLECharacteristic *minHumidityCharacteristic = pService->createCharacteristic(
@@ -127,13 +144,13 @@ void bleSetup() {
 
 void bleLoop() {
   if (deviceConnected) {
-    Serial.println("bleLoop");
-    char buffer[10];
-    dtostrf(humPercentAverage, 3, 1, buffer);
-    Serial.println(humPercentAverage);
-    Serial.println(buffer);
-    pHumidityCharacteristic->setValue(humPercentAverage);
+    char cstr[16];
+    itoa(humPercentAverage, cstr, 10);
+    pHumidityCharacteristic->setValue(cstr);
     pHumidityCharacteristic->notify();
+    delay(2000);
+
+    Serial.println("bleLoop");
   }
 }
 
@@ -165,11 +182,12 @@ void setup() {
 }
 
 void loop() {
-  // Reading potentiometer value
   int inRead = analogRead(humSensorPin);
 
   humAverage = getMedia(inRead);
   Serial.print("humidity: ");
+  Serial.print(inRead);
+  Serial.print(",");
   Serial.println(humAverage);
 
   pos = map(humAverage, 0, 4095, 0, 180);
@@ -217,3 +235,10 @@ void loop() {
     }
     */
 }
+
+/*
+TODO:
+- añadir la calibración
+- guardar la calibración
+- dividir el código en distintos ficheros
+*/
