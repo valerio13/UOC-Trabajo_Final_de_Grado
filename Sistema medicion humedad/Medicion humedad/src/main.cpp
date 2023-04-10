@@ -7,7 +7,9 @@
 
 // Definición de UUID para la característica de humedad
 #define HUMIDITY_SERVICE_UUID "0000181A-0000-1000-8000-00805F9B34FB"
-#define HUMIDITY_CHARACTERISTIC_UUID "00002A6F-0000-1000-8000-00805F9B34FB"
+
+// #define HUMIDITY_CHARACTERISTIC_UUID "00002A6F-0000-1000-8000-00805F9B34FB"
+#define HUMIDITY_CHARACTERISTIC_UUID "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 
 // Definición de UUID para la característica de calibración de humedad mínima
 #define MIN_HUMIDITY_CHARACTERISTIC_UUID "d5db8f5f-9f28-4786-ae66-8b1e332ab298"
@@ -27,10 +29,10 @@ Servo servo;
 int pos = 0;
 
 // Variables para el cálculo de la humedad
-int humAverage = 0;
-int minAverage = 1360;
-int maxAverage = 3360;
-float humidity = 0.0;
+float minAverage = 1360.0;
+float maxAverage = 3360.0;
+float humAverage = 0.0;
+float humPercentAverage = 0.0;
 
 const int NUM_VALORES =
     10; // Constante que define el número de valores que se promediarán
@@ -99,6 +101,10 @@ void bleSetup() {
       HUMIDITY_CHARACTERISTIC_UUID,
       BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY);
   pHumidityCharacteristic->addDescriptor(new BLE2902());
+  // pHumidityCharacteristic->addDescriptor(
+  //     new BLEDescriptor(BLEUUID((uint16_t)0x2901)));
+  // pHumidityCharacteristic->addDescriptor(
+  //     new BLEDescriptor(BLEUUID((uint16_t)0x2904)));
 
   // Caracteristica de calibrar humedad mínima
   BLECharacteristic *minHumidityCharacteristic = pService->createCharacteristic(
@@ -121,9 +127,12 @@ void bleSetup() {
 
 void bleLoop() {
   if (deviceConnected) {
+    Serial.println("bleLoop");
     char buffer[10];
-    dtostrf(humidity, 3, 1, buffer);
-    pHumidityCharacteristic->setValue(buffer);
+    dtostrf(humPercentAverage, 3, 1, buffer);
+    Serial.println(humPercentAverage);
+    Serial.println(buffer);
+    pHumidityCharacteristic->setValue(humPercentAverage);
     pHumidityCharacteristic->notify();
   }
 }
@@ -159,29 +168,32 @@ void loop() {
   // Reading potentiometer value
   int inRead = analogRead(humSensorPin);
 
-  humidity = getMedia(inRead);
+  humAverage = getMedia(inRead);
   Serial.print("humidity: ");
-  Serial.println(humidity);
+  Serial.println(humAverage);
 
-  pos = map(humidity, 0, 4095, 0, 180);
-  Serial.println(pos);
+  pos = map(humAverage, 0, 4095, 0, 180);
   if (pos > 180) {
     pos = 180;
   } else if (pos < 0) {
     pos = 0;
   }
-  Serial.println(pos);
 
   servo.write(pos);
 
-  minValue = min(humidity, minValue);
-  maxValue = max(humidity, maxValue);
-
+  minAverage = min(humAverage, minAverage);
+  maxAverage = max(humAverage, maxAverage);
+  humPercentAverage = map(humAverage, maxAverage, minAverage, 0, 100);
+  if (humPercentAverage < 0) {
+    humPercentAverage = 0;
+  } else if (humPercentAverage > 100) {
+    humPercentAverage = 100;
+  }
   Serial.println("");
 
   bleLoop();
 
-  delay(500);
+  delay(1000);
   /*
     if (calibratingMin) {
       // Código para calibrar el valor de humedad mínima
