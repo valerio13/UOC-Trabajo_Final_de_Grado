@@ -1,3 +1,6 @@
+// Ejemplo:
+// https://github.com/neu-rah/ArduinoMenu/blob/master/examples/SSD1306Ascii_Button_Navigation/Button_Navigation/Button_Navigation.ino
+
 #include <menu.h>
 #include <menuIO/serialIn.h>
 #include <menuIO/serialOut.h>
@@ -18,7 +21,6 @@ public:
   Used printTo(navRoot &root, bool sel, menuOut &out, idx_t idx, idx_t len,
                idx_t) override {
     return out.printRaw(F("special prompt!"), len);
-    ;
   }
 };
 
@@ -41,15 +43,6 @@ public:
 // to the navigation system (suspending the menu)
 result systemExit();
 
-// using the customized menu class
-// note that first parameter is the class name
-/*altMENU(confirmExit, subMenu, "Exit?", doNothing, noEvent, wrapStyle,
-        (Menu::_menuData | Menu::_canNav), OP("Yes", systemExit, enterEvent),
-        EXIT("Cancel"));
-
-MENU(mainMenu, "Main menu", doNothing, noEvent, wrapStyle,
-     OP("Op1", doNothing, noEvent), SUBMENU(subMenu));
-*/
 int ledCtrl = LOW;
 result myLedOn() {
   ledCtrl = HIGH;
@@ -75,8 +68,10 @@ TOGGLE(ledCtrl, setLed, "Led: ", doNothing, noEvent,
        VALUE("Off", LOW, doNothing, noEvent));
 
 MENU(subMenu, "Sub-Menu", doNothing, noEvent, noStyle,
-     altOP(altPrompt, "", doNothing, noEvent), OP("Op", doNothing, noEvent),
-     EXIT("<Back"));
+     altOP(altPrompt, "", doNothing,
+           noEvent),               // creo ejecuta la función de altPrompt
+     OP("Op", doNothing, noEvent), // no hace nada
+     EXIT("<Back"));               // vuelve atras
 
 result myLedOff() {
   ledCtrl = LOW;
@@ -86,14 +81,21 @@ result myLedOff() {
 char *constMEM hexDigit MEMMODE = "0123456789ABCDEF";
 char *constMEM hexNr[] MEMMODE = {"0", "x", hexDigit, hexDigit};
 char buf1[] = "0x11";
+int test = 55;
 
 MENU(mainMenu, "Main menu", doNothing, noEvent, wrapStyle,
-     OP("Op1", doNothing, noEvent), OP("Op2", doNothing, noEvent),
-     // ,FIELD(test,"Test","%",0,100,10,1,doNothing,noEvent,wrapStyle)
-     SUBMENU(subMenu), SUBMENU(setLed), OP("LED On", myLedOn, enterEvent),
-     OP("LED Off", myLedOff, enterEvent), SUBMENU(selMenu), SUBMENU(chooseMenu),
-     //,OP("Alert test",doAlert,enterEvent),
-     EDIT("Hex", buf1, hexNr, doNothing, noEvent, noStyle), EXIT("<Back"));
+     OP("Op1", doNothing, noEvent), // no hace nada
+     OP("Op2", doNothing, noEvent), // no hace nada
+     FIELD(test, "Test", "%", 0, 100, 10, 1, doNothing, noEvent, wrapStyle),
+     // //pone un valor a test
+     SUBMENU(subMenu),                    // entra en el submenu "subMenu"
+     SUBMENU(setLed),                     // cambia el valor de "ledCtrl"
+     OP("LED On", myLedOn, enterEvent),   // ejecuta la función "ledCtrl"
+     OP("LED Off", myLedOff, enterEvent), // ejecuta la función "myLedOff"
+     SUBMENU(selMenu),                    // va cambiando los valores de selMenu
+     SUBMENU(chooseMenu),                 // hace una selección
+     // EDIT("Hex", buf1, hexNr, doNothing, noEvent, noStyle), // no funciona
+     EXIT("<Back"));
 
 #define MAX_DEPTH 2
 
