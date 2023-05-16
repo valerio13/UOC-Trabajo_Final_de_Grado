@@ -1,18 +1,18 @@
 // Ejemplo:
 // https://github.com/neu-rah/ArduinoMenu/blob/master/examples/SSD1306Ascii_Button_Navigation/Button_Navigation/Button_Navigation.ino
-
-#include <menu.h>
-#include <menuIO/serialIn.h>
-#include <menuIO/serialOut.h>
-
+/*
 #include <Adafruit_GFX.h>     // libreria para pantallas graficas
 #include <Adafruit_SSD1306.h> // libreria para controlador SSD1306
 #include <Wire.h>             // libreria para bus I2C
+#include <menu.h>
+#include <menuIO/keyIn.h>
+#include <menuIO/serialIn.h>
+#include <menuIO/serialOut.h>
 
 #include <menuIO/adafruitGfxOut.h>
 
 using namespace Menu;
-
+#include "config.h"
 // customizing a prompt look!
 // by extending the prompt class
 class altPrompt : public prompt {
@@ -129,8 +129,32 @@ MENU_OUTPUTS(out, MAX_DEPTH,
                         {0, 0, gfxWidth / fontX, gfxHeight / fontY}),
              SERIAL_OUT(Serial));
 
-serialIn serial(Serial);
-NAVROOT(nav, mainMenu, MAX_DEPTH, serial, out);
+#ifdef NAV_BUTTONS_INPUT_PULLUP
+// build a map of keys to menu commands
+keyMap joystickBtn_map[] = {
+    {-BTN_SEL, defaultNavCodes[enterCmd].ch},
+    {-BTN_UP, defaultNavCodes[upCmd].ch},
+    {-BTN_DOWN, defaultNavCodes[downCmd].ch},
+    {-BTN_ESC, defaultNavCodes[escCmd].ch},
+};
+keyIn<TOTAL_NAV_BUTTONS> joystickBtns(joystickBtn_map); // the input driver
+#else
+// build a map of keys to menu commands
+keyMap joystickBtn_map[] = {
+    {BTN_SEL, defaultNavCodes[enterCmd].ch},
+    {BTN_UP, defaultNavCodes[upCmd].ch},
+    {BTN_DOWN, defaultNavCodes[downCmd].ch},
+    {BTN_ESC, defaultNavCodes[escCmd].ch},
+};
+keyIn<TOTAL_NAV_BUTTONS> joystickBtns(joystickBtn_map); // the input driver
+#endif
+
+NAVROOT(nav, mainMenu, MAX_DEPTH, joystickBtns, out);
+
+
+
+// serialIn serial(Serial);
+// NAVROOT(nav, mainMenu, MAX_DEPTH, serial, out);
 
 bool running = true; // lock menu if false
 
@@ -169,4 +193,84 @@ void loop() {
   }
 
   delay(100); // simulate a delay when other tasks are done
+}*/
+#include <Adafruit_GFX.h>
+#include <Adafruit_SH1106.h>
+#include <SPI.h>
+#include <Wire.h>
+
+#define OLED_SDA 12
+#define OLED_SCL 14
+
+Adafruit_SH1106 display(21, 22);
+
+void setup() {
+  Serial.begin(115200);
+  /* initialize OLED with I2C address 0x3C */
+  display.begin(SH1106_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
 }
+
+
+void testdrawline() {
+  for (int16_t i = 0; i < display.width(); i += 4) {
+    display.drawLine(0, 0, i, display.height() - 1, WHITE);
+    display.display();
+  }
+  for (int16_t i = 0; i < display.height(); i += 4) {
+    display.drawLine(0, 0, display.width() - 1, i, WHITE);
+    display.display();
+  }
+  delay(250);
+
+  display.clearDisplay();
+  for (int16_t i = 0; i < display.width(); i += 4) {
+    display.drawLine(0, display.height() - 1, i, 0, WHITE);
+    display.display();
+  }
+  for (int16_t i = display.height() - 1; i >= 0; i -= 4) {
+    display.drawLine(0, display.height() - 1, display.width() - 1, i, WHITE);
+    display.display();
+  }
+  delay(250);
+
+  display.clearDisplay();
+  for (int16_t i = display.width() - 1; i >= 0; i -= 4) {
+    display.drawLine(display.width() - 1, display.height() - 1, i, 0, WHITE);
+    display.display();
+  }
+  for (int16_t i = display.height() - 1; i >= 0; i -= 4) {
+    display.drawLine(display.width() - 1, display.height() - 1, 0, i, WHITE);
+    display.display();
+  }
+  delay(250);
+
+  display.clearDisplay();
+  for (int16_t i = 0; i < display.height(); i += 4) {
+    display.drawLine(display.width() - 1, 0, 0, i, WHITE);
+    display.display();
+  }
+  for (int16_t i = 0; i < display.width(); i += 4) {
+    display.drawLine(display.width() - 1, 0, i, display.height() - 1, WHITE);
+    display.display();
+  }
+  delay(250);
+}
+
+void loop() {
+  /* set text size, color, cursor position,
+  set buffer with  Hello world and show off*/
+  display.setTextSize(1);
+  display.setTextColor(WHITE);
+  display.setCursor(0, 0);
+  display.println("Hello, world!");
+  display.display();
+  delay(2000);
+  display.clearDisplay();
+  testdrawline();
+  display.display();
+  delay(2000);
+  display.clearDisplay();
+}
+
+// https://www.iotsharing.com/2017/05/how-to-use-arduino-esp32-to-display-oled.html
