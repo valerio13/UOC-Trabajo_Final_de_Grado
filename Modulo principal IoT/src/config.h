@@ -44,7 +44,7 @@
 #define BTN_DOWN 16 // Down Button
 #define BTN_ESC 19  // Exit Button
 // Comment the following to disable internal pullup for Navigate buttons
-//#define NAV_BUTTONS_INPUT_PULLUP
+// #define NAV_BUTTONS_INPUT_PULLUP
 
 #define TOTAL_NAV_BUTTONS 4 // Total Navigation Button used
 
@@ -52,20 +52,3 @@
 #define LED_PIN 11 // Defined LED Pin to D11
 
 #define MAX_DEPTH 2
-
-#ifdef LOC
-// #define LARGE_FONT
-#define INV
-#endif
-
-/*Do not change the values(recomended)*/
-#ifdef LARGE_FONT
-#define menuFont LARGE_FONT
-#define fontW 8
-#define fontH 16
-#else
-// #define menuFont System5x7
-#define menuFont lcd5x7
-#define fontW 5
-#define fontH 8
-#endif
