@@ -6,11 +6,11 @@
 #include <Wire.h>         // libreria para bus I2C
 #include <menu.h>
 #include <menuIO/keyIn.h>
-#include <menuIO/serialIn.h>
-#include <menuIO/serialOut.h>
-
+// #include <menuIO/serialIn.h>
+// #include <menuIO/serialOut.h>
 #include <Adafruit_SH1106.h>
 #include <SPI.h>
+#include <ble.h>
 
 #include <menuIO/adafruitGfxOut.h>
 
@@ -89,13 +89,13 @@ MENU(irrigationMenu, "Menu riego", doNothing, noEvent, noStyle,
 MENU(calibMinMenu, "Calibrar humedad minima", doNothing, noEvent, noStyle,
      altOP(altPrompt, "", doNothing,
            noEvent), // creo ejecuta la función de altPrompt
-    //  SUBMENU(moistureMenu), OP("Op", doNothing, noEvent), // no hace nada
+     //  SUBMENU(moistureMenu), OP("Op", doNothing, noEvent), // no hace nada
      EXIT("<Atras"));
 
 MENU(calibMaxMenu, "Calibrar humedad maxima", doNothing, noEvent, noStyle,
      altOP(altPrompt, "", doNothing,
            noEvent), // creo ejecuta la función de altPrompt
-    //  SUBMENU(moistureMenu), OP("Op", doNothing, noEvent), // no hace nada
+     //  SUBMENU(moistureMenu), OP("Op", doNothing, noEvent), // no hace nada
      EXIT("<Atras"));
 
 MENU(moistureMenu, "Menu humedad", doNothing, noEvent, noStyle,
@@ -120,7 +120,6 @@ result myLedOff() {
 
 int test = 55;
 
-
 MENU(mainMenu, "Menu principal", doNothing, noEvent, wrapStyle,
      //  OP("Op1", doNothing, noEvent), // no hace nada
      //  OP("Op2", doNothing, noEvent), // no hace nada
@@ -128,7 +127,7 @@ MENU(mainMenu, "Menu principal", doNothing, noEvent, wrapStyle,
      // //pone un valor a test
      SUBMENU(moistureMenu),   // entra en el submenu "subMenu"
      SUBMENU(irrigationMenu), // cambia el valor de "ledCtrl"
-     SUBMENU(iotMenu), // cambia el valor de "ledCtrl"
+     SUBMENU(iotMenu),        // cambia el valor de "ledCtrl"
      //  OP("LED On", myLedOn, enterEvent),   // ejecuta la función "ledCtrl"
      //  OP("LED Off", myLedOff, enterEvent), // ejecuta la función "myLedOff"
      //  SUBMENU(selMenu),                    // va cambiando los valores de
@@ -158,7 +157,8 @@ MENU_OUTPUTS(out, MAX_DEPTH,
              ADAGFX_OUT(oled, colors, fontX, fontY,
                         {0, 0, SCREEN_WIDTH / (fontX / 2),
                          SCREEN_HEIGHT / fontY}),
-             SERIAL_OUT(Serial));
+             //  SERIAL_OUT(Serial));
+             NONE);
 
 // build a map of keys to menu commands
 keyMap joystickBtn_map[] = {
@@ -174,26 +174,28 @@ NAVROOT(nav, mainMenu, MAX_DEPTH, joystickBtns, out);
 bool running = true; // lock menu if false
 
 result systemExit() {
-  Serial.println();
-  Serial.println("Terminating...");
+  //   Serial.println();
+  //   Serial.println("Terminating...");
   // do some termiination stuff here
   running = false; // prevents the menu from running again!
-  Serial.println("done.");
-  nav.idleOn(); // suspend the menu system
+                   //   Serial.println("done.");
+  nav.idleOn();    // suspend the menu system
   return quit;
 }
 
 void setup() {
   Serial.begin(921600);
-  while (!Serial)
-    ;
+  //   while (!Serial)
+  //     ;
   Serial.println("menu 4.x custom sub-menu prompt example");
-  Serial.flush();
+  //   Serial.flush();
 
   Wire.begin(); // inicializa bus I2C
   oled.begin(SH1106_SWITCHCAPVCC,
              0x3C);    // inicializa pantalla con direccion 0x3C
   oled.clearDisplay(); // limpia pantalla
+
+  setupBle();
 }
 
 void loop() {
@@ -202,6 +204,8 @@ void loop() {
     nav.doOutput();
     oled.display();
   }
+
+  loopBle();
 
   delay(100); // simulate a delay when other tasks are done
 }
