@@ -23,11 +23,11 @@
    function). And txValue is the data to be sent, in this example just a byte
    incremented every second.
 */
+#include <Arduino.h>
 #include <BLE2902.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
-#include <Arduino.h>
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pTxCharacteristic;
@@ -108,7 +108,7 @@ void loop() {
     return;
   }
 
-    if (deviceConnected) {
+  if (deviceConnected) {
     // Read humidity
     hum = random(10, 100);
     // Notify humidity reading from BME
@@ -119,21 +119,21 @@ void loop() {
     pTxCharacteristic->notify();
     txValue++;
     delay(1000); // bluetooth stack will go into congestion, if too many packets
-               // are sent
-    }
+                 // are sent
+  }
 
-    // disconnecting
-    if (!deviceConnected && oldDeviceConnected) {
-      delay(1000); // give the bluetooth stack the chance to get things ready
-      pServer->startAdvertising(); // restart advertising
-      Serial.println("start advertising");
-      oldDeviceConnected = deviceConnected;
-    }
-    // connecting
-    if (deviceConnected && !oldDeviceConnected) {
-      // do stuff here on connecting
-      oldDeviceConnected = deviceConnected;
-    }
+  // disconnecting
+  if (!deviceConnected && oldDeviceConnected) {
+    delay(1000); // give the bluetooth stack the chance to get things ready
+    pServer->startAdvertising(); // restart advertising
+    Serial.println("start advertising");
+    oldDeviceConnected = deviceConnected;
+  }
+  // connecting
+  if (deviceConnected && !oldDeviceConnected) {
+    // do stuff here on connecting
+    oldDeviceConnected = deviceConnected;
+  }
 
-    lastTime = millis();
+  lastTime = millis();
 }
