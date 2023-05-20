@@ -1,3 +1,7 @@
+/*
+//  Módulo humedad: Test BLE Server
+//
+*/
 #include <Arduino.h>
 #include <BLE2902.h>
 #include <BLEDevice.h>
@@ -60,7 +64,7 @@ void setup() {
 
   // Create a BLE Characteristic
   pTxCharacteristic = pService->createCharacteristic(
-      CHARACTERISTIC_UUID_TX, BLECharacteristic::PROPERTY_NOTIFY);
+      CHARACTERISTIC_UUID_TX, BLECharacteristic::PROPERTY_READ);
 
   pTxCharacteristic->addDescriptor(new BLE2902());
 
@@ -91,7 +95,7 @@ void loop() {
     dtostrf(hum, 6, 2, humidityTemp);
     // Set humidity Characteristic value and notify connected client
     pTxCharacteristic->setValue(humidityTemp);
-    pTxCharacteristic->notify();
+    // pTxCharacteristic->notify();
     txValue++;
     delay(1000); // bluetooth stack will go into congestion, if too many packets
                  // are sent
