@@ -35,6 +35,12 @@ bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint8_t txValue = 0;
 
+// Timer variables
+unsigned long lastTime = 0;
+unsigned long timerDelay = 3000;
+
+float hum;
+
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
@@ -98,24 +104,36 @@ void setup() {
 
 void loop() {
 
-  if (deviceConnected) {
-    pTxCharacteristic->setValue(&txValue, 1);
-    pTxCharacteristic->notify();
-    txValue++;
-    delay(10); // bluetooth stack will go into congestion, if too many packets
-               // are sent
+  if ((millis() - lastTime) > timerDelay) {
+    return;
   }
 
-  // disconnecting
-  if (!deviceConnected && oldDeviceConnected) {
-    delay(500); // give the bluetooth stack the chance to get things ready
-    pServer->startAdvertising(); // restart advertising
-    Serial.println("start advertising");
-    oldDeviceConnected = deviceConnected;
-  }
-  // connecting
-  if (deviceConnected && !oldDeviceConnected) {
-    // do stuff here on connecting
-    oldDeviceConnected = deviceConnected;
-  }
+    if (deviceConnected) {
+    // Read humidity
+    hum = random(10, 100);
+    // Notify humidity reading from BME
+    static char humidityTemp[6];
+    dtostrf(hum, 6, 2, humidityTemp);
+    // Set humidity Characteristic value and notify connected client
+    pTxCharacteristic->setValue(humidityTemp);
+    pTxCharacteristic->notify();
+    txValue++;
+    delay(1000); // bluetooth stack will go into congestion, if too many packets
+               // are sent
+    }
+
+    // disconnecting
+    if (!deviceConnected && oldDeviceConnected) {
+      delay(1000); // give the bluetooth stack the chance to get things ready
+      pServer->startAdvertising(); // restart advertising
+      Serial.println("start advertising");
+      oldDeviceConnected = deviceConnected;
+    }
+    // connecting
+    if (deviceConnected && !oldDeviceConnected) {
+      // do stuff here on connecting
+      oldDeviceConnected = deviceConnected;
+    }
+
+    lastTime = millis();
 }
