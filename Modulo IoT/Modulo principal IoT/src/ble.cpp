@@ -1,233 +1,123 @@
+/*
+//
+//  Módulo IoT: Test BLE client
+//
+*/
+
 #include "BLEDevice.h"
-#include "ble.h"
-#include <Adafruit_GFX.h>
-#include <Adafruit_SSD1306.h>
+#include <Arduino.h>
 #include <Wire.h>
-// Default Temperature is in Celsius
-// Comment the next line for Temperature in Fahrenheit
-#define temperatureCelsius
 
-// BLE Server name (the other ESP32 name running the server sketch)
-#define bleServerName "Sistema humedad plantas 1"
+// The remote service we wish to connect to.
+static BLEUUID serviceUUID("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+// The characteristic of the remote service we are interested in.
+static BLEUUID charUUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E");
+#define bleServerName "Bluetooth test"
 
-/* UUID's of the service, characteristic that we want to read*/
-// BLE Service
-static BLEUUID bmeServiceUUID("0000181A-0000-1000-8000-00805F9B34FB");
-
-// BLE Characteristics
-// Temperature Celsius Characteristic
-// static BLEUUID
-//     temperatureCharacteristicUUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E");
-
-// Humidity Characteristic
-static BLEUUID
-    humidityCharacteristicUUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E");
-
-// Flags stating if should begin connecting and if the connection is up
 static boolean doConnect = false;
 static boolean connected = false;
+static boolean doScan = false;
+static BLERemoteCharacteristic *pRemoteCharacteristic;
+static BLEAdvertisedDevice *myDevice;
+bool ledStatus = false;
 
-// Address of the peripheral device. Address will be found during scanning...
-static BLEAddress *pServerAddress;
-
-// Characteristicd that we want to read
-// static BLERemoteCharacteristic *temperatureCharacteristic;
-static BLERemoteCharacteristic *humidityCharacteristic;
-
-// Activate notify
-const uint8_t notificationOn[] = {0x1, 0x0};
-const uint8_t notificationOff[] = {0x0, 0x0};
-
-// #define SCREEN_WIDTH 128 // OLED display width, in pixels
-// #define SCREEN_HEIGHT 64 // OLED display height, in pixels
-
-// // Declaration for an SSD1306 display connected to I2C (SDA, SCL pins)
-// Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
-
-// Variables to store temperature and humidity
-// char *temperatureChar;
-char *humidityChar;
-
-// Flags to check whether new temperature and humidity readings are available
-// boolean newTemperature = false;
-boolean newHumidity = false;
-
-// When the BLE Server sends a new humidity reading with the notify property
-static void
-humidityNotifyCallback(BLERemoteCharacteristic *pBLERemoteCharacteristic,
-                       uint8_t *pData, size_t length, bool isNotify) {
-  // store humidity value
-  humidityChar = (char *)pData;
-  newHumidity = true;
-  Serial.print(newHumidity);
-}
-
-// Connect to the BLE Server that has the name, Service, and Characteristics
-bool connectToServer(BLEAddress pAddress) {
-  BLEClient *pClient = BLEDevice::createClient();
-
-  // Connect to the remove BLE Server.
-  pClient->connect(pAddress);
-  Serial.println(" - Connected to server");
-
-  // Obtain a reference to the service we are after in the remote BLE server.
-  BLERemoteService *pRemoteService = pClient->getService(bmeServiceUUID);
-  if (pRemoteService == nullptr) {
-    Serial.print("Failed to find our service UUID: ");
-    Serial.println(bmeServiceUUID.toString().c_str());
-    return (false);
-  }
-
-  // Obtain a reference to the characteristics in the service of the remote BLE
-  // server.
-  //   temperatureCharacteristic =
-  //       pRemoteService->getCharacteristic(temperatureCharacteristicUUID);
-  humidityCharacteristic =
-      pRemoteService->getCharacteristic(humidityCharacteristicUUID);
-
-  //   if (temperatureCharacteristic == nullptr ||
-  //       humidityCharacteristic == nullptr) {
-  if (humidityCharacteristic == nullptr) {
-    Serial.print("Failed to find our characteristic UUID");
-    return false;
-  }
-  Serial.println(" - Found our characteristics");
-
-  // Assign callback functions for the Characteristics
-  //   temperatureCharacteristic->registerForNotify(temperatureNotifyCallback);
-  humidityCharacteristic->registerForNotify(humidityNotifyCallback);
-  return true;
-}
-
-// Callback function that gets called, when another device's advertisement has
-// been received
-class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
-  void onResult(BLEAdvertisedDevice advertisedDevice) {
-    if (advertisedDevice.getName() ==
-        bleServerName) { // Check if the name of the advertiser matches
-      advertisedDevice.getScan()
-          ->stop(); // Scan can be stopped, we found what we are looking for
-      pServerAddress = new BLEAddress(
-          advertisedDevice
-              .getAddress()); // Address of advertiser is the one we need
-      doConnect = true; // Set indicator, stating that we are ready to connect
-      Serial.println("Device found. Connecting!");
-    }
+class MyClientCallback : public BLEClientCallbacks {
+  void onConnect(BLEClient *pclient) {}
+  void onDisconnect(BLEClient *pclient) {
+    connected = false;
+    Serial.println("onDisconnect");
   }
 };
 
-// When the BLE Server sends a new temperature reading with the notify property
-// static void
-// temperatureNotifyCallback(BLERemoteCharacteristic *pBLERemoteCharacteristic,
-//                           uint8_t *pData, size_t length, bool isNotify) {
-//   // store temperature value
-//   temperatureChar = (char *)pData;
-//   newTemperature = true;
-// }
+bool connectToServer() {
+  Serial.print("Forming a connection to ");
+  Serial.println(myDevice->getAddress().toString().c_str());
 
-
-// // function that prints the latest sensor readings in the OLED display
-// void printReadings() {
-
-//   display.clearDisplay();
-//   // display temperature
-//   display.setTextSize(1);
-//   display.setCursor(0, 0);
-//   display.print("Temperature: ");
-//   display.setTextSize(2);
-//   display.setCursor(0, 10);
-//   display.print(temperatureChar);
-//   display.setTextSize(1);
-//   display.cp437(true);
-//   display.write(167);
-//   display.setTextSize(2);
-//   Serial.print("Temperature:");
-//   Serial.print(temperatureChar);
-// #ifdef temperatureCelsius
-//   // Temperature Celsius
-//   display.print("C");
-//   Serial.print("C");
-// #else
-//   // Temperature Fahrenheit
-//   display.print("F");
-//   Serial.print("F");
-// #endif
-
-//   // display humidity
-//   display.setTextSize(1);
-//   display.setCursor(0, 35);
-//   display.print("Humidity: ");
-//   display.setTextSize(2);
-//   display.setCursor(0, 45);
-//   display.print(humidityChar);
-//   display.print("%");
-//   display.display();
-//   Serial.print(" Humidity:");
-//   Serial.print(humidityChar);
-//   Serial.println("%");
-// }
-
-void setupBle() {
-  // OLED display setup
-  //  SSD1306_SWITCHCAPVCC = generate display voltage from 3.3V internally
-  //   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Address 0x3C for
-  //   128x32
-  //     Serial.println(F("SSD1306 allocation failed"));
-  //     for (;;)
-  //       ; // Don't proceed, loop forever
-  //   }
-  //   display.clearDisplay();
-  //   display.setTextSize(2);
-  //   display.setTextColor(WHITE, 0);
-  //   display.setCursor(0, 25);
-  //   display.print("BLE Client");
-  //   display.display();
-
-  // Start serial communication
-//   Serial.begin(921600);
-  Serial.println("Starting Arduino BLE Client application...");
-
-  // Init BLE device
-  BLEDevice::init("");
-
-  // Retrieve a Scanner and set the callback we want to use to be informed when
-  // we have detected a new device.  Specify that we want active scanning and
-  // start the scan to run for 30 seconds.
-  BLEScan *pBLEScan = BLEDevice::getScan();
-  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-  pBLEScan->setActiveScan(true);
-  pBLEScan->start(30);
+  BLEClient *pClient = BLEDevice::createClient();
+  pClient->setClientCallbacks(new MyClientCallback());
+  Serial.println(" - Created client");
+  // Connect to the remove BLE Server.
+  pClient->connect(myDevice); // if you pass BLEAdvertisedDevice instead of
+                              // address, it will be recognized type of peer
+                              // device address (public or private)
+  Serial.println(" - Connected to server");
+  // Obtain a reference to the service we are after in the remote BLE server.
+  BLERemoteService *pRemoteService = pClient->getService(serviceUUID);
+  if (pRemoteService == nullptr) {
+    Serial.print("Failed to find our service UUID: ");
+    Serial.println(serviceUUID.toString().c_str());
+    pClient->disconnect();
+    return false;
+  }
+  Serial.println(" - Found our service");
+  // Obtain a reference to the characteristic in the service of the remote BLE
+  // server.
+  pRemoteCharacteristic = pRemoteService->getCharacteristic(charUUID);
+  if (pRemoteCharacteristic == nullptr) {
+    Serial.print("Failed to find our characteristic UUID: ");
+    Serial.println(charUUID.toString().c_str());
+    pClient->disconnect();
+    return false;
+  }
+  Serial.println(" - Found our characteristic");
+  // Read the value of the characteristic.
+  if (pRemoteCharacteristic->canRead()) {
+    std::string value = pRemoteCharacteristic->readValue();
+    Serial.print("The characteristic value was: ");
+    Serial.println(value.c_str());
+  }
+  connected = true;
+  return true;
 }
 
-void loopBle() {
-  // If the flag "doConnect" is true then we have scanned for and found the
-  // desired BLE Server with which we wish to connect.  Now we connect to it.
-  // Once we are connected we set the connected flag to be true.
+class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
+  void onResult(BLEAdvertisedDevice advertisedDevice) {
+    Serial.print("BLE Advertised Device found: ");
+    Serial.println(advertisedDevice.toString().c_str());
+    if (advertisedDevice.getName() == bleServerName) {
+      BLEDevice::getScan()->stop();
+      myDevice = new BLEAdvertisedDevice(advertisedDevice);
+      doConnect = true;
+      doScan = true;
+    } // Found our server
+  }   // onResult
+};    // MyAdvertisedDeviceCallbacks
+
+void setupBle() {
+  Serial.begin(921600);
+  Serial.println("Starting Arduino BLE Client application...");
+  BLEDevice::init("");
+
+  BLEScan *pBLEScan = BLEDevice::getScan();
+  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+  pBLEScan->setInterval(1349);
+  pBLEScan->setWindow(449);
+  pBLEScan->setActiveScan(true);
+  pBLEScan->start(5, false);
+} // End of setup.
+
+// This is the Arduino main loop function.
+std::string getBleData() {
   if (doConnect == true) {
-    if (connectToServer(*pServerAddress)) {
+    if (connectToServer()) {
       Serial.println("We are now connected to the BLE Server.");
-      // Activate the Notify property of each Characteristic
-      //   temperatureCharacteristic->getDescriptor(BLEUUID((uint16_t)0x2902))
-      //       ->writeValue((uint8_t *)notificationOn, 2, true);
-      humidityCharacteristic->getDescriptor(BLEUUID((uint16_t)0x2902))
-          ->writeValue((uint8_t *)notificationOn, 2, true);
-      connected = true;
     } else {
-      Serial.println("We have failed to connect to the server; Restart your "
-                     "device to scan for nearby BLE server again.");
+      Serial.println("We have failed to connect to the server; there is nothin "
+                     "more we will do.");
     }
     doConnect = false;
   }
-  // if new temperature readings are available, print in the OLED
-  //   if (newTemperature && newHumidity) {
-  //     newTemperature = false;
-  //     newHumidity = false;
-  //     printReadings();
-  //   }
 
-  if (newHumidity) {
-    newHumidity = false;
-    Serial.println("Hum");
+  std::string value = "--";
+
+  if (connected) {
+    if (pRemoteCharacteristic->canRead()) {
+      value = pRemoteCharacteristic->readValue();
+      Serial.print("Humedad: ");
+      Serial.println(value.c_str());
+    }
+  } else if (doScan) {
+    BLEDevice::getScan()->start(0);
   }
-  delay(1000); // Delay a second between loops.
+  return value;
 }

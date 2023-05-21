@@ -1,7 +1,9 @@
 #ifndef BLE_H
 #define BLE_H
 
+#include <Arduino.h>
+
 void setupBle();
-void loopBle();
+std::string getBleData();
 
 #endif

@@ -30,6 +30,13 @@
  */
 
 #define OLED_I2C_ADDRESS 0x3C // Defined OLED I2C Address
+#define OLED_SDA 21
+#define OLED_SCL 22
+
+#define MAX_DEPTH 2
+
+#define SCREEN_WIDTH 128 // reemplaza ocurrencia de SCREEN_WIDTH por 128
+#define SCREEN_HEIGHT 64 // reemplaza ocurrencia de SCREEN_HEIGHT por 64
 
 /*
  * Define your font from the list.
@@ -39,10 +46,9 @@
 #define LARGE_FONT Verdana12
 
 // Navigate buttons
-#define BTN_SEL 18  // Select button
-#define BTN_UP 17   // Up Button
-#define BTN_DOWN 16 // Down Button
-#define BTN_ESC 19  // Exit Button
+#define BTN_RIGHT 17 // Up Button
+#define BTN_LEFT 16  // Down Button
+
 // Comment the following to disable internal pullup for Navigate buttons
 // #define NAV_BUTTONS_INPUT_PULLUP
 
@@ -52,3 +58,6 @@
 #define LED_PIN 11 // Defined LED Pin to D11
 
 #define MAX_DEPTH 2
+
+#define fontX 12
+#define fontY 16

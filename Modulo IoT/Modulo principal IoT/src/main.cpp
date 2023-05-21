@@ -1,211 +1,204 @@
-// Ejemplo:
-// https://github.com/neu-rah/ArduinoMenu/blob/master/examples/SSD1306Ascii_Button_Navigation/Button_Navigation/Button_Navigation.ino
-// https://www.iotsharing.com/2017/05/how-to-use-arduino-esp32-to-display-oled.html
+//////////////////////////////////////////////
+///   Author: Valerio Colantonio
+///   Projecte d'interacció tangible
+//////////////////////////////////////////////
 
-#include <Adafruit_GFX.h> // libreria para pantallas graficas
-#include <Wire.h>         // libreria para bus I2C
-#include <menu.h>
-#include <menuIO/keyIn.h>
-// #include <menuIO/serialIn.h>
-// #include <menuIO/serialOut.h>
-#include <Adafruit_SH1106.h>
-#include <SPI.h>
+#include "Menu.h"        //Included the file to manage the menu
+#include "OledDisplay.h" //Included the file to drive the Oled display
+#include <Arduino.h>
 #include <ble.h>
+#include <config.h>
 
-#include <menuIO/adafruitGfxOut.h>
+#define DELAY 500 // Define the delay time used in the loop method
+#define HUM_DELAY 30000
+#define PRESS_BUTTON_DELAY                                                     \
+  500 // Define the delay time used in the read buttons loop
 
-using namespace Menu;
-#include "config.h"
+void MonitoringButtons();
+void manageRightButtonPressed();
+void manageLeftButtonPressed();
+void checkHumidity();
 
-#define OLED_SDA 21
-#define OLED_SCL 22
+// Enum representing the state of the aplication
+enum AppState { RUNNING, MENU, SUBMENU };
 
-Adafruit_SH1106 oled(OLED_SDA, OLED_SCL);
+AppState appState =
+    RUNNING; // Variable that stores the states of the aplication
 
-// customizing a prompt look!
-// by extending the prompt class
-class altPrompt : public prompt {
-public:
-  altPrompt(constMEM promptShadow &p) : prompt(p) {}
-  Used printTo(navRoot &root, bool sel, menuOut &out, idx_t idx, idx_t len,
-               idx_t) override {
-    return out.printRaw(F("special prompt!"), len);
-  }
-};
-
-// customizing a menu prompt look
-class confirmExit : public menu {
-public:
-  confirmExit(constMEM menuNodeShadow &shadow) : menu(shadow) {}
-  Used printTo(navRoot &root, bool sel, menuOut &out, idx_t idx, idx_t len,
-               idx_t p) override {
-    return idx < 0 ? // idx will be -1 when printing a menu title or a valid
-                     // index when printing as option
-               menu::printTo(root, sel, out, idx, len, p)
-                   : // when printing title
-               out.printRaw((constText *)F("Exit"),
-                            len); // when printing as regular option
-  }
-};
-
-// this function is defined below because we need to refer
-// to the navigation system (suspending the menu)
-result systemExit();
-
-int ledCtrl = LOW;
-result myLedOn() {
-  ledCtrl = HIGH;
-  return proceed;
-}
-
-int selTest = 0;
-SELECT(selTest, selMenu, "Select", doNothing, noEvent, noStyle,
-       VALUE("Zero", 0, doNothing, noEvent),
-       VALUE("One", 1, doNothing, noEvent),
-       VALUE("Two", 2, doNothing, noEvent));
-
-int chooseTest = -1;
-CHOOSE(chooseTest, chooseMenu, "Choose", doNothing, noEvent, noStyle,
-       VALUE("First", 1, doNothing, noEvent),
-       VALUE("Second", 2, doNothing, noEvent),
-       VALUE("Third", 3, doNothing, noEvent),
-       VALUE("Last", -1, doNothing, noEvent));
-
-// TOGGLE(ledCtrl, irrigationMenu, "Led: ", doNothing, noEvent,
-//        noStyle, //,doExit,enterEvent,noStyle,
-//        VALUE("On", HIGH, doNothing, noEvent),
-//        VALUE("Off", LOW, doNothing, noEvent));
-
-int sensorIndex = 0;
-
-MENU(irrigationMenu, "Menu riego", doNothing, noEvent, noStyle,
-     FIELD(sensorIndex, "Sensor ", "", 0, 10, 1, 1, doNothing, noEvent,
-           wrapStyle),
-     //  altOP(altPrompt, "", doNothing,
-     //        noEvent),               // creo ejecuta la función de altPrompt
-     //  OP("Op", doNothing, noEvent), // no hace nada
-     EXIT("<Atras")); // vuelve atras
-
-MENU(calibMinMenu, "Calibrar humedad minima", doNothing, noEvent, noStyle,
-     altOP(altPrompt, "", doNothing,
-           noEvent), // creo ejecuta la función de altPrompt
-     //  SUBMENU(moistureMenu), OP("Op", doNothing, noEvent), // no hace nada
-     EXIT("<Atras"));
-
-MENU(calibMaxMenu, "Calibrar humedad maxima", doNothing, noEvent, noStyle,
-     altOP(altPrompt, "", doNothing,
-           noEvent), // creo ejecuta la función de altPrompt
-     //  SUBMENU(moistureMenu), OP("Op", doNothing, noEvent), // no hace nada
-     EXIT("<Atras"));
-
-MENU(moistureMenu, "Menu humedad", doNothing, noEvent, noStyle,
-     FIELD(sensorIndex, "Sensor ", "", 0, 10, 1, 1, doNothing, noEvent,
-           wrapStyle),
-     //  altOP(altPrompt, "", doNothing,
-     //        noEvent), // creo ejecuta la función de altPrompt
-     SUBMENU(calibMinMenu), SUBMENU(calibMaxMenu),
-     //  OP("Op", doNothing, noEvent), // no hace nada
-     EXIT("<Atras")); // vuelve atras
-
-MENU(iotMenu, "Menu IoT", doNothing, noEvent, noStyle,
-     altOP(altPrompt, "", doNothing,
-           noEvent),               // creo ejecuta la función de altPrompt
-     OP("Op", doNothing, noEvent), // no hace nada
-     EXIT("<Atras"));              // vuelve atras
-
-result myLedOff() {
-  ledCtrl = LOW;
-  return proceed;
-}
-
-int test = 55;
-
-MENU(mainMenu, "Menu principal", doNothing, noEvent, wrapStyle,
-     //  OP("Op1", doNothing, noEvent), // no hace nada
-     //  OP("Op2", doNothing, noEvent), // no hace nada
-     //  FIELD(test, "Test", "%", 0, 100, 10, 1, doNothing, noEvent, wrapStyle),
-     // //pone un valor a test
-     SUBMENU(moistureMenu),   // entra en el submenu "subMenu"
-     SUBMENU(irrigationMenu), // cambia el valor de "ledCtrl"
-     SUBMENU(iotMenu),        // cambia el valor de "ledCtrl"
-     //  OP("LED On", myLedOn, enterEvent),   // ejecuta la función "ledCtrl"
-     //  OP("LED Off", myLedOff, enterEvent), // ejecuta la función "myLedOff"
-     //  SUBMENU(selMenu),                    // va cambiando los valores de
-     //  selMenu SUBMENU(chooseMenu),                 // hace una selección
-     EXIT("<Back"));
-
-#define MAX_DEPTH 2
-
-#define SCREEN_WIDTH 128 // reemplaza ocurrencia de SCREEN_WIDTH por 128
-#define SCREEN_HEIGHT 64 // reemplaza ocurrencia de SCREEN_HEIGHT por 64
-
-#define OLED_RESET 4 // necesario por la libreria pero no usado
-
-const colorDef<uint16_t> colors[] = {
-    {{BLACK, WHITE}, {BLACK, WHITE, WHITE}}, // bgColor
-    {{WHITE, BLACK}, {WHITE, BLACK, BLACK}}, // fgColor
-    {{WHITE, BLACK}, {WHITE, BLACK, BLACK}}, // valColor
-    {{WHITE, BLACK}, {WHITE, BLACK, BLACK}}, // unitColor
-    {{WHITE, BLACK}, {BLACK, BLACK, BLACK}}, // cursorColor
-    {{BLACK, WHITE}, {WHITE, BLACK, BLACK}}, // titleColor
-};
-
-#define fontX 12
-#define fontY 16
-
-MENU_OUTPUTS(out, MAX_DEPTH,
-             ADAGFX_OUT(oled, colors, fontX, fontY,
-                        {0, 0, SCREEN_WIDTH / (fontX / 2),
-                         SCREEN_HEIGHT / fontY}),
-             //  SERIAL_OUT(Serial));
-             NONE);
-
-// build a map of keys to menu commands
-keyMap joystickBtn_map[] = {
-    {BTN_SEL, defaultNavCodes[enterCmd].ch},
-    {BTN_UP, defaultNavCodes[upCmd].ch},
-    {BTN_DOWN, defaultNavCodes[downCmd].ch},
-    {BTN_ESC, defaultNavCodes[escCmd].ch},
-};
-keyIn<TOTAL_NAV_BUTTONS> joystickBtns(joystickBtn_map); // the input driver
-
-NAVROOT(nav, mainMenu, MAX_DEPTH, joystickBtns, out);
-
-bool running = true; // lock menu if false
-
-result systemExit() {
-  //   Serial.println();
-  //   Serial.println("Terminating...");
-  // do some termiination stuff here
-  running = false; // prevents the menu from running again!
-                   //   Serial.println("done.");
-  nav.idleOn();    // suspend the menu system
-  return quit;
-}
-
+// The Setup method
 void setup() {
-  Serial.begin(921600);
-  //   while (!Serial)
-  //     ;
-  Serial.println("menu 4.x custom sub-menu prompt example");
-  //   Serial.flush();
+  Serial.begin(9600); // Setting the serial speed
 
-  Wire.begin(); // inicializa bus I2C
-  oled.begin(SH1106_SWITCHCAPVCC,
-             0x3C);    // inicializa pantalla con direccion 0x3C
-  oled.clearDisplay(); // limpia pantalla
+  setupDisplay();                        // Call the setup display method
+  displayInitialMessage("Iniciando..."); // Call the display initial
+                                         // message method
+  pinMode(BTN_LEFT, INPUT);              // Setup input for left button
+  pinMode(BTN_RIGHT, INPUT);             // Setup input for right button
 
   setupBle();
 }
 
+// The loop method
 void loop() {
-  nav.doInput();
-  if (nav.changed(0)) { // only draw if changed
-    nav.doOutput();
-    oled.display();
+  MonitoringButtons();      // Call the monitoring buttons method
+  static long lastTime = 0; // Variable that stores the last time in miliseconds
+                            // that the app enters in the "if" statement below.
+  long now = millis();
+  if (abs(now - lastTime) > DELAY) {
+    lastTime = now; // Stores the last time that this "if" was executed.
+
+    switch (appState) { // Switch atatement to check the aplication state.
+    case RUNNING:       // Code executed if the appState is running.
+      checkHumidity();
+      break;      // Code necessary to don't execute the code below.
+    case SUBMENU: // Code executed if the submenu opcion was choose.
+      // When a submenu is selected or calibrating humidity or calibrating
+      // dryness was selected.
+
+      MenuOptions menuOption =
+          getCurrentMenuOption(); // We need to know if the calibrating
+                                  // humidity or calibrating dryness was
+                                  // selected.
+      if (menuOption ==
+          HUMIDITY_MENU) // If the calibrating humidity was selected.
+        displaySubMenu(menuOption,
+                       100); // We display the maximum humidity
+                             // value sended from the sensor.
+      else if (menuOption ==
+               IRRIGATION_MENU) // If the calibrating dryness was selected.
+        displaySubMenu(menuOption,
+                       11); // We display the maximum dryness
+                            // value sended from the sensor.
+      break;
+    }
   }
+}
 
-  loopBle();
+// Method that monitoring the buttons and desides what to do in base of the
+// button pressed.
+void MonitoringButtons() {
+  static long lastTime = 0; // Variable that stores the last time in miliseconds
+                            // that the app enters in the "if" statement below.
+  long now = millis();
 
-  delay(100); // simulate a delay when other tasks are done
+  int btnRightStateBefore =
+      LOW; // Stores the state before of the right button reading.
+  int btnRightStateNow =
+      LOW; // Stores the present state of the right button reading.
+  int btnLeftStateBefore =
+      LOW; // Stores the state before of the left button reading.
+  int btnLeftStateNow =
+      LOW; // Stores the present state of the left button reading.
+
+  if (abs(now - lastTime) >
+      PRESS_BUTTON_DELAY) { // This "if" is used instead of the "delay"
+                            // function and it has the same functionality but
+                            // the "delay" stops the execution of the program.
+    lastTime = now;         // Stores the last time that this "if" was executed.
+
+    btnRightStateBefore = btnRightStateNow; // Record the state of the right
+                                            // button before the reading.
+    btnRightStateNow =
+        digitalRead(BTN_RIGHT); // Update the present state of the right button.
+
+    btnLeftStateBefore = btnLeftStateNow; // Record the state of the left
+                                          // button before the reading.
+    btnLeftStateNow =
+        digitalRead(BTN_LEFT); // Update the present state of the left button.
+
+    bool rightButtonPressed =
+        btnRightStateBefore == LOW &&
+        btnRightStateNow ==
+            HIGH; // Check if the right button signal has a rising edge
+    bool leftButtonPressed =
+        btnLeftStateBefore == LOW &&
+        btnLeftStateNow ==
+            HIGH; // Check if the left button signal has a rising edge
+
+    MenuOptions menuOption =
+        getCurrentMenuOption(); // Get the current menu option
+
+    if (rightButtonPressed &&
+        leftButtonPressed) {     // If both buttons are pressed.
+      if (appState == RUNNING) { // And the present app state is running.
+        appState = MENU;         // The app state changes to menu.
+        displayMenu(getMenuOptionsStr(), getMenuLength(),
+                    0); // And the main menu is displayed.
+      }
+    } else if (rightButtonPressed) { // If right button is pressed.
+      manageRightButtonPressed();
+    } else if (leftButtonPressed) {
+      manageLeftButtonPressed();
+    }
+  }
+}
+
+void manageRightButtonPressed() {
+  switch (appState) { // And the app state is...
+  case RUNNING:       // running than...
+    break;            // Command necessary to don't execute the code below.
+  case MENU:          // instead if the main menu is displayed...
+    nextOption();     // next option is selected.
+    displayMenu(getMenuOptionsStr(), getMenuLength(),
+                getSelectedOption()); // the main menu is updated to
+                                      // highlight the selected option
+    break;           // Command necessary to don't execute the code below.
+  case SUBMENU:      // instead if a submenu is displayed...
+    resetMenu();     // The last menu selection is reset.
+    appState = MENU; // And the app returns to the main manu.
+    break;           // Command necessary to don't execute the code below.
+  }
+}
+
+void manageLeftButtonPressed() {
+  // If left button is pressed.
+  switch (appState) { // And the app state is...
+  case RUNNING:       // running than...
+    break;            // Command necessary to don't execute the code below.
+  case MENU:          // instead if the main menu is displayed...
+    if (menuOption == EXIT) { // and the exit option is selected...
+      appState = RUNNING;     // the app state returns to running.
+      resetMenu(); // and the display returns to the main page showing the
+                   // sensor humidity value and thresold.
+    } else {       // otherwise...
+      appState = SUBMENU; // the app enters in a selected submenu.
+    }
+    break;      // Command necessary to don't execute the code below.
+  case SUBMENU: // If the submenu was selected...
+    if (menuOption ==
+        HUMIDITY_MENU) { // And the menu option is the humidity calibration
+                         // (the calibrate humidity page is displayed)
+    } else if (menuOption ==
+               IRRIGATION_MENU) { // But if the menu option is the dryness
+                                  // calibration (the calibrate dryness page
+                                  // is displayed)
+    }
+    displayMessage("CALIBRAR", "GUARDADO",
+                   ""); // In the two cases above the message of calibration
+                        // saved is displayed.
+    delay(1000);        // The message is displayed for 1 second.
+    break;              // Command necessary to don't execute the code below.
+  }
+}
+
+void checkHumidity() {
+  static long lastTime = 0;
+  long now = millis();
+  if (abs(now - lastTime) > HUM_DELAY) {
+    lastTime = now; // Stores the last time that this "if" was executed.
+
+    displayMessage("Conectando con el", "sensor de humedad", "");
+    delay(1000);
+    std::string value = getBleData();
+
+    String line1 = String("Umbral: ");
+    line1.concat("");
+    line1.concat("%");
+
+    String line2 = String("Humedad: ");
+    line2.concat(value.c_str());
+    line2.concat("%");
+
+    displayMessage("Lectura de humedad", line1, line2);
+  }
 }
