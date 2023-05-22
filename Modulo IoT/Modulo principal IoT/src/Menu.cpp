@@ -6,8 +6,8 @@
 #include "Menu.h"    //Include the menu.h to be able to use the enum MenuOptions
 #include <Arduino.h> //Includes the Arduino's standard library
 
-MenuOptions menuOption = HUMIDITY_MENU; // Define the selected menu option
-                                        // when the app is started.
+MenuOptions menuOption = HUMIDITY_MAIN_MENU; // Define the selected menu option
+                                             // when the app is started.
 
 const byte menuSize = 3; // Variable that define the menu size.
 static String menuOtionsStr[menuSize] = {

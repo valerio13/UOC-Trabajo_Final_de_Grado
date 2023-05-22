@@ -1,6 +1,5 @@
 //////////////////////////////////////////////
 ///   Author: Valerio Colantonio
-///   Projecte d'interacció tangible
 //////////////////////////////////////////////
 
 // This file defines the methods and variables that are developed in the
@@ -15,10 +14,17 @@ void resetMenu(); // Method that reset the menu options.
 
 enum MenuOptions // Enum that defines the menu options
 {
-  HUMIDITY_MENU,
-  IRRIGATION_MENU,
-  IOT_MENU,
-  EXIT
+  HUMIDITY_MAIN_MENU,
+  IRRIGATION_MAIN_MENU,
+  IOT_MAIN_MENU,
+  EXIT_MAIN_MENU,
+  CALIB_THRESHOLD_HUM,
+  CALIB_MAX_HUMIDITY,
+  CALIB_DRYNESS_HUMIDITY,
+  EXIT_HUMIDITY,
+  CALIB_IRRIGATION,
+  EXECUTE_IRRIGATION,
+  EXIT_IRRIGATION
 };
 
 extern MenuOptions
@@ -36,5 +42,11 @@ byte getSelectedOption(); // Method that returns the index of the present
 
 MenuOptions
 getCurrentMenuOption(); // Method that returns the the present selected option.
+
+byte getMenuLevel();
+
+void displayRightOption();
+
+void displayLeftOption();
 
 #endif // End of define instruction.

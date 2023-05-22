@@ -60,12 +60,12 @@ void loop() {
                                   // humidity or calibrating dryness was
                                   // selected.
       if (menuOption ==
-          HUMIDITY_MENU) // If the calibrating humidity was selected.
+          HUMIDITY_MAIN_MENU) // If the calibrating humidity was selected.
         displaySubMenu(menuOption,
                        100); // We display the maximum humidity
                              // value sended from the sensor.
       else if (menuOption ==
-               IRRIGATION_MENU) // If the calibrating dryness was selected.
+               IRRIGATION_MAIN_MENU) // If the calibrating dryness was selected.
         displaySubMenu(menuOption,
                        11); // We display the maximum dryness
                             // value sended from the sensor.
@@ -156,8 +156,9 @@ void manageLeftButtonPressed() {
   case RUNNING:       // running than...
     break;            // Command necessary to don't execute the code below.
   case MENU:          // instead if the main menu is displayed...
-    if (menuOption == EXIT) { // and the exit option is selected...
-      appState = RUNNING;     // the app state returns to running.
+    if (menuOption ==
+        EXIT_MAIN_MENU) { // and the EXIT_MAIN_MENU option is selected...
+      appState = RUNNING; // the app state returns to running.
       resetMenu(); // and the display returns to the main page showing the
                    // sensor humidity value and thresold.
     } else {       // otherwise...
@@ -166,12 +167,12 @@ void manageLeftButtonPressed() {
     break;      // Command necessary to don't execute the code below.
   case SUBMENU: // If the submenu was selected...
     if (menuOption ==
-        HUMIDITY_MENU) { // And the menu option is the humidity calibration
-                         // (the calibrate humidity page is displayed)
+        HUMIDITY_MAIN_MENU) { // And the menu option is the humidity calibration
+                              // (the calibrate humidity page is displayed)
     } else if (menuOption ==
-               IRRIGATION_MENU) { // But if the menu option is the dryness
-                                  // calibration (the calibrate dryness page
-                                  // is displayed)
+               IRRIGATION_MAIN_MENU) { // But if the menu option is the dryness
+      // calibration (the calibrate dryness page
+      // is displayed)
     }
     displayMessage("CALIBRAR", "GUARDADO",
                    ""); // In the two cases above the message of calibration

@@ -184,13 +184,13 @@ void displaySubMenuStr(String subMenuTitle, String description,
 
 // Method that displays the submenu page after the selection.
 void displaySubMenu(MenuOptions menuOption, int humValeu) {
-  switch (menuOption) { // Switch with the selected option.
-  case HUMIDITY_MENU:   // If the option is humidity...
+  switch (menuOption) {    // Switch with the selected option.
+  case HUMIDITY_MAIN_MENU: // If the option is humidity...
     displaySubMenuStr(
         "CALIBRAR", "Humedad",
         String(humValeu)); // It will displays the calibrate humidity page.
     break;                 // Command necessary to don't execute the code below.
-  case IRRIGATION_MENU:    // If the option is dryness...
+  case IRRIGATION_MAIN_MENU: // If the option is dryness...
     displaySubMenuStr(
         "CALIBRAR", "Sequedad",
         String(humValeu)); // It will displays the calibrate dryness page.
