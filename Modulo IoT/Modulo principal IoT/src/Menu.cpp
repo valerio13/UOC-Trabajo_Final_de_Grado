@@ -84,6 +84,7 @@ void MoistureMenuState::handleInput(int input) {
     }
   } else if (input == BTN_ESC) {
     currentMenuState = &mainMenuState;
+    menuIndex = 0;
   }
 }
 
@@ -127,6 +128,7 @@ void IrrigationMenuState::handleInput(int input) {
     }
   } else if (input == BTN_ESC) {
     currentMenuState = &mainMenuState;
+    menuIndex = 0;
   }
 }
 

@@ -128,10 +128,11 @@ void displayMenu(String title, String *pdata, byte length, byte selectedOption) 
                           // given screen line.
   }
 
-  oled.setTextColor(WHITE); // Set the text color.
-  oled.setCursor(0, 0);     // Locate cursor at given coordinates.
+  oled.fillRect(0, 0, oled.width(), 12, WHITE);
+  oled.setTextColor(BLACK); // Set the text color.
+  oled.setCursor(2, 2);     // Locate cursor at given coordinates.
   oled.setTextSize(1);      // Set text size to 2.
-  oled.print("MENU");       // Set the text of the menu title.
+  oled.print(title);        // Set the text of the menu title.
 
   // oled.fillRect(0, 55, oled.width(), 12,
   //               WHITE);     // Draw a white filled rectangle in the bottom side.
