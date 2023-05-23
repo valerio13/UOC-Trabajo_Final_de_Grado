@@ -1,52 +1,69 @@
-//////////////////////////////////////////////
-///   Author: Valerio Colantonio
-//////////////////////////////////////////////
-
-// This file defines the methods and variables that are developed in the
-// menu.cpp. Without this definitions the .ino file can not use it.
-#ifndef MENU_H_ // Preprocessor instruction, that it will be executed before
-                // compiling the application if the menu.h is not defined.
-#define MENU_H_ // It is defined just once.
+#ifndef MENU_H
+#define MENU_H
 
 #include <Arduino.h>
 
-void resetMenu(); // Method that reset the menu options.
+class MenuState;
+class MainMenuState;
+class SubMenuState;
+class MoistureMenuState;
+class IrrigationMenuState;
 
-enum MenuOptions // Enum that defines the menu options
-{
-  HUMIDITY_MAIN_MENU,
-  IRRIGATION_MAIN_MENU,
-  IOT_MAIN_MENU,
-  EXIT_MAIN_MENU,
-  CALIB_THRESHOLD_HUM,
-  CALIB_MAX_HUMIDITY,
-  CALIB_DRYNESS_HUMIDITY,
-  EXIT_HUMIDITY,
-  CALIB_IRRIGATION,
-  EXECUTE_IRRIGATION,
-  EXIT_IRRIGATION
+// Declaración de la variable global externa
+extern MenuState *currentMenuState;
+extern MainMenuState mainMenuState;
+extern MoistureMenuState moistureMenuState;
+extern IrrigationMenuState irrigationMenuState;
+
+extern SubMenuState subMenu1State;
+extern SubMenuState subMenu2State;
+extern SubMenuState subMenu3State;
+
+// Clase abstracta que define el estado base
+class MenuState {
+public:
+  virtual void handleInput(int input) = 0;
+  virtual void display() = 0;
+
+protected:
+  String name;
+  int menuIndex = 0;
+  byte menuSize = 1;
+  String menuOtionsStr[5];
 };
 
-extern MenuOptions
-    menuOption; // Variable that stores the selected menu option. Is mark as
-                // extern so it can be used in the other files.
+// Implementación de un estado concreto
+class MainMenuState : public MenuState {
+public:
+  MainMenuState();
+  void handleInput(int input) override;
+  void display() override;
+};
 
-String *getMenuOptionsStr(); // Method that returns the menu options array.
+// Implementación de un estado concreto
+class MoistureMenuState : public MenuState {
+public:
+  MoistureMenuState();
+  void handleInput(int input) override;
+  void display() override;
+};
 
-byte getMenuLength(); // Method that gets the menu length.
+// Implementación de un estado concreto
+class IrrigationMenuState : public MenuState {
+public:
+  IrrigationMenuState();
+  void handleInput(int input) override;
+  void display() override;
+};
 
-void nextOption(); // Method that select the next menu option.
+// Implementación de un estado concreto
+class SubMenuState : public MenuState {
+public:
+  SubMenuState(const char *name);
+  void handleInput(int input) override;
+  void display() override;
 
-byte getSelectedOption(); // Method that returns the index of the present
-                          // selected option.
-
-MenuOptions
-getCurrentMenuOption(); // Method that returns the the present selected option.
-
-byte getMenuLevel();
-
-void displayRightOption();
-
-void displayLeftOption();
-
-#endif // End of define instruction.
+private:
+  const char *name;
+};
+#endif // MENU_H

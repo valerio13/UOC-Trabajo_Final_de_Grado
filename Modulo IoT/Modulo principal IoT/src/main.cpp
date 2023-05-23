@@ -15,9 +15,20 @@
   500 // Define the delay time used in the read buttons loop
 
 void MonitoringButtons();
-void manageRightButtonPressed();
-void manageLeftButtonPressed();
 void checkHumidity();
+
+// Variables globales
+MainMenuState mainMenuState;
+MoistureMenuState moistureMenuState;
+IrrigationMenuState irrigationMenuState;
+SubMenuState subMenu1State("Submenú 1");
+SubMenuState subMenu2State("Submenú 2");
+SubMenuState subMenu3State("Submenú 3");
+
+MenuState *currentMenuState = &mainMenuState;
+
+// Declaración de la variable global externa
+extern MenuState *currentMenuState;
 
 // Enum representing the state of the aplication
 enum AppState { RUNNING, MENU, SUBMENU };
@@ -27,15 +38,18 @@ AppState appState =
 
 // The Setup method
 void setup() {
-  Serial.begin(9600); // Setting the serial speed
-
+  Serial.begin(921600); // Setting the serial speed
+  Serial.println("Módulo IoT");
+  
   setupDisplay();                        // Call the setup display method
   displayInitialMessage("Iniciando..."); // Call the display initial
                                          // message method
-  pinMode(BTN_LEFT, INPUT);              // Setup input for left button
-  pinMode(BTN_RIGHT, INPUT);             // Setup input for right button
+  pinMode(BTN_UP, INPUT);                // Setup input for left button
+  pinMode(BTN_DOWN, INPUT);              // Setup input for right button
+  pinMode(BTN_ENTER, INPUT);             // Setup input for right button
+  pinMode(BTN_ESC, INPUT);               // Setup input for right button
 
-  setupBle();
+  // setupBle();
 }
 
 // The loop method
@@ -49,26 +63,27 @@ void loop() {
 
     switch (appState) { // Switch atatement to check the aplication state.
     case RUNNING:       // Code executed if the appState is running.
-      checkHumidity();
+      // checkHumidity();
       break;      // Code necessary to don't execute the code below.
     case SUBMENU: // Code executed if the submenu opcion was choose.
       // When a submenu is selected or calibrating humidity or calibrating
       // dryness was selected.
 
-      MenuOptions menuOption =
-          getCurrentMenuOption(); // We need to know if the calibrating
-                                  // humidity or calibrating dryness was
-                                  // selected.
-      if (menuOption ==
-          HUMIDITY_MAIN_MENU) // If the calibrating humidity was selected.
-        displaySubMenu(menuOption,
-                       100); // We display the maximum humidity
-                             // value sended from the sensor.
-      else if (menuOption ==
-               IRRIGATION_MAIN_MENU) // If the calibrating dryness was selected.
-        displaySubMenu(menuOption,
-                       11); // We display the maximum dryness
-                            // value sended from the sensor.
+      // MenuOptions menuOption =
+      //     getCurrentMenuOption(); // We need to know if the calibrating
+      //                             // humidity or calibrating dryness was
+      //                             // selected.
+      // if (menuOption ==
+      //     HUMIDITY_MAIN_MENU) // If the calibrating humidity was selected.
+      //   displaySubMenu(menuOption,
+      //                  100); // We display the maximum humidity
+      //                        // value sended from the sensor.
+      // else if (menuOption ==
+      //          IRRIGATION_MAIN_MENU) // If the calibrating dryness was
+      //          selected.
+      //   displaySubMenu(menuOption,
+      //                  11); // We display the maximum dryness
+      //                       // value sended from the sensor.
       break;
     }
   }
@@ -77,108 +92,57 @@ void loop() {
 // Method that monitoring the buttons and desides what to do in base of the
 // button pressed.
 void MonitoringButtons() {
-  static long lastTime = 0; // Variable that stores the last time in miliseconds
-                            // that the app enters in the "if" statement below.
+  static long lastTime = 0;
   long now = millis();
 
-  int btnRightStateBefore =
-      LOW; // Stores the state before of the right button reading.
-  int btnRightStateNow =
-      LOW; // Stores the present state of the right button reading.
-  int btnLeftStateBefore =
-      LOW; // Stores the state before of the left button reading.
-  int btnLeftStateNow =
-      LOW; // Stores the present state of the left button reading.
+  int btnDownStateBefore = LOW;
+  int btnUpStateBefore = LOW;
+  int btnEnterStateBefore = LOW;
+  int btnEscStateBefore = LOW;
 
-  if (abs(now - lastTime) >
-      PRESS_BUTTON_DELAY) { // This "if" is used instead of the "delay"
-                            // function and it has the same functionality but
-                            // the "delay" stops the execution of the program.
-    lastTime = now;         // Stores the last time that this "if" was executed.
+  if (abs(now - lastTime) > PRESS_BUTTON_DELAY) {
+    lastTime = now;
 
-    btnRightStateBefore = btnRightStateNow; // Record the state of the right
-                                            // button before the reading.
-    btnRightStateNow =
-        digitalRead(BTN_RIGHT); // Update the present state of the right button.
+    int btnDownStateNow = digitalRead(BTN_DOWN);
+    int btnEnterStateNow = digitalRead(BTN_ENTER);
+    int btnEscStateNow = digitalRead(BTN_ESC);
+    int btnUpStateNow = digitalRead(BTN_UP);
 
-    btnLeftStateBefore = btnLeftStateNow; // Record the state of the left
-                                          // button before the reading.
-    btnLeftStateNow =
-        digitalRead(BTN_LEFT); // Update the present state of the left button.
+    bool downButtonPressed = btnDownStateBefore == LOW && btnDownStateNow == HIGH;
+    bool upButtonPressed = btnUpStateBefore == LOW && btnUpStateNow == HIGH;
+    bool enterButtonPressed = btnEnterStateBefore == LOW && btnEnterStateNow == HIGH;
+    bool escButtonPressed = btnEscStateBefore == LOW && btnEscStateNow == HIGH;
 
-    bool rightButtonPressed =
-        btnRightStateBefore == LOW &&
-        btnRightStateNow ==
-            HIGH; // Check if the right button signal has a rising edge
-    bool leftButtonPressed =
-        btnLeftStateBefore == LOW &&
-        btnLeftStateNow ==
-            HIGH; // Check if the left button signal has a rising edge
-
-    MenuOptions menuOption =
-        getCurrentMenuOption(); // Get the current menu option
-
-    if (rightButtonPressed &&
-        leftButtonPressed) {     // If both buttons are pressed.
-      if (appState == RUNNING) { // And the present app state is running.
-        appState = MENU;         // The app state changes to menu.
-        displayMenu(getMenuOptionsStr(), getMenuLength(),
-                    0); // And the main menu is displayed.
+    switch (appState)
+    {
+    case RUNNING:
+      if (enterButtonPressed || escButtonPressed) {
+        currentMenuState = &mainMenuState;
+        currentMenuState->display();
+        appState = MENU;
       }
-    } else if (rightButtonPressed) { // If right button is pressed.
-      manageRightButtonPressed();
-    } else if (leftButtonPressed) {
-      manageLeftButtonPressed();
+      break;
+    case MENU:
+      if (downButtonPressed) {
+        currentMenuState->handleInput(BTN_DOWN);
+        currentMenuState->display();
+      } else if (upButtonPressed) {
+        currentMenuState->handleInput(BTN_UP);
+        currentMenuState->display();
+      } else if (enterButtonPressed) {
+        currentMenuState->handleInput(BTN_ENTER);
+        currentMenuState->display();
+      } else if (escButtonPressed) {
+        currentMenuState->handleInput(BTN_ESC);
+        currentMenuState->display();
+      }
+      break;
     }
-  }
-}
 
-void manageRightButtonPressed() {
-  switch (appState) { // And the app state is...
-  case RUNNING:       // running than...
-    break;            // Command necessary to don't execute the code below.
-  case MENU:          // instead if the main menu is displayed...
-    nextOption();     // next option is selected.
-    displayMenu(getMenuOptionsStr(), getMenuLength(),
-                getSelectedOption()); // the main menu is updated to
-                                      // highlight the selected option
-    break;           // Command necessary to don't execute the code below.
-  case SUBMENU:      // instead if a submenu is displayed...
-    resetMenu();     // The last menu selection is reset.
-    appState = MENU; // And the app returns to the main manu.
-    break;           // Command necessary to don't execute the code below.
-  }
-}
-
-void manageLeftButtonPressed() {
-  // If left button is pressed.
-  switch (appState) { // And the app state is...
-  case RUNNING:       // running than...
-    break;            // Command necessary to don't execute the code below.
-  case MENU:          // instead if the main menu is displayed...
-    if (menuOption ==
-        EXIT_MAIN_MENU) { // and the EXIT_MAIN_MENU option is selected...
-      appState = RUNNING; // the app state returns to running.
-      resetMenu(); // and the display returns to the main page showing the
-                   // sensor humidity value and thresold.
-    } else {       // otherwise...
-      appState = SUBMENU; // the app enters in a selected submenu.
-    }
-    break;      // Command necessary to don't execute the code below.
-  case SUBMENU: // If the submenu was selected...
-    if (menuOption ==
-        HUMIDITY_MAIN_MENU) { // And the menu option is the humidity calibration
-                              // (the calibrate humidity page is displayed)
-    } else if (menuOption ==
-               IRRIGATION_MAIN_MENU) { // But if the menu option is the dryness
-      // calibration (the calibrate dryness page
-      // is displayed)
-    }
-    displayMessage("CALIBRAR", "GUARDADO",
-                   ""); // In the two cases above the message of calibration
-                        // saved is displayed.
-    delay(1000);        // The message is displayed for 1 second.
-    break;              // Command necessary to don't execute the code below.
+    btnDownStateBefore = btnDownStateNow;
+    btnUpStateBefore = btnUpStateNow;
+    btnEnterStateBefore = btnEnterStateNow;
+    btnEscStateBefore = btnEscStateNow;
   }
 }
 

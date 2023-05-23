@@ -46,8 +46,10 @@
 #define LARGE_FONT Verdana12
 
 // Navigate buttons
-#define BTN_RIGHT 17 // Up Button
-#define BTN_LEFT 16  // Down Button
+#define BTN_UP 16    // Up Button
+#define BTN_DOWN 17  // Down Button
+#define BTN_ENTER 18 // Down Button
+#define BTN_ESC 19   // Down Button
 
 // Comment the following to disable internal pullup for Navigate buttons
 // #define NAV_BUTTONS_INPUT_PULLUP

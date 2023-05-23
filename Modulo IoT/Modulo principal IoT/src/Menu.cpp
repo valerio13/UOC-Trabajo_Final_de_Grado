@@ -1,57 +1,161 @@
-//////////////////////////////////////////////
-///   Author: Valerio Colantonio
-///   Projecte d'interacció tangible
-//////////////////////////////////////////////
+#include "menu.h"
+#include "OledDisplay.h"
+#include "config.h"
+#include "Arduino.h"
 
-#include "Menu.h"    //Include the menu.h to be able to use the enum MenuOptions
-#include <Arduino.h> //Includes the Arduino's standard library
+// Declaración de la variable global externa
+extern MenuState *currentMenuState;
 
-MenuOptions menuOption = HUMIDITY_MAIN_MENU; // Define the selected menu option
-                                             // when the app is started.
-
-const byte menuSize = 3; // Variable that define the menu size.
-static String menuOtionsStr[menuSize] = {
-    "Calib. Max. Hum.", "Calib. Max. Sequedad",
-    "Salir"}; // Define an array string with the menu option that is displayed
-              // when menu is selected.
-
-byte selectedOption = 0; // Variable that stores the selected menu option index.
-
-// Method that reset the menu options.
-void resetMenu() {
-  selectedOption = 0; // Reset the selected menu option index.
-  menuOption =
-      (MenuOptions)selectedOption; // Stores the new menu option with index 0.
+// Implementación de MainMenuState
+MainMenuState::MainMenuState() {
+  name = "MENU PRINCIPAL";
+  menuSize = 3;
+  String options[] = {"Modulo humedad", "Modulo riego", "Servicio IoT"};
+  for (int i = 0; i < menuSize; i++) {
+    menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
+  }
 }
 
-// Method that returns the menu options array.
-String *getMenuOptionsStr() {
-  return &menuOtionsStr[0]; // It returns the address of the first element. It
-                            // is the way to pass the array using a method.
+// Implementación de MainMenuState
+void MainMenuState::handleInput(int input) {
+  if (input == BTN_DOWN) {
+    menuIndex++;
+    if (menuIndex >= menuSize)
+      menuIndex = 0;
+  } else if (input == BTN_UP) {
+    menuIndex--;
+    if (menuIndex < 0)
+      menuIndex = menuSize - 1;
+  } else if (input == BTN_ENTER) {
+    switch (menuIndex) {
+    case 0:
+      currentMenuState = &moistureMenuState;
+      break;
+    case 1:
+      currentMenuState = &irrigationMenuState;
+      break;
+    case 2:
+      // Navegar al submenú 3
+      currentMenuState = &subMenu3State;
+      break;
+    }
+  }
 }
 
-// Method that gets the menu length.
-byte getMenuLength() {
-  return menuSize; // It returns the size of the menu array.
+void MainMenuState::display() {
+  displayMenu(name, menuOtionsStr, menuSize, menuIndex);
 }
 
-// Method that select the next menu option.
-void nextOption() {
-  selectedOption++; // Increase the selected option index.
-  if (selectedOption >=
-      menuSize)         // If the index oversize the menu length it is reset.
-    selectedOption = 0; // Reset the selected option index.
-
-  menuOption = (MenuOptions)selectedOption; // Stores the selected menu option.
+// Implementación de MoistureMenuState
+MoistureMenuState::MoistureMenuState() {
+  name = "MENU HUMEDAD";
+  menuSize = 3;
+  String options[] = {"Configurar umbral", "Calibrar sequedad",
+                      "Calibrar humedad max"};
+  for (int i = 0; i < menuSize; i++) {
+    menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
+  }
 }
 
-// Method that returns the index of the present selected option.
-byte getSelectedOption() {
-  return selectedOption; // Returns the stored present selected option index as
-                         // byte.
+// Implementación de MoistureMenuState
+void MoistureMenuState::handleInput(int input) {
+  if (input == BTN_DOWN) {
+    menuIndex++;
+    if (menuIndex >= menuSize)
+      menuIndex = 0;
+  } else if (input == BTN_UP) {
+    menuIndex--;
+    if (menuIndex < 0)
+      menuIndex = menuSize - 1;
+  } else if (input == BTN_ENTER) {
+    switch (menuIndex) {
+    case 0:
+      // Navegar al submenú 1
+      currentMenuState = &subMenu1State;
+      break;
+    case 1:
+      // Navegar al submenú 2
+      currentMenuState = &subMenu2State;
+    case 2:
+      // Navegar al submenú 3
+      currentMenuState = &subMenu3State;
+    default:
+      break;
+    }
+  } else if (input == BTN_ESC) {
+    currentMenuState = &mainMenuState;
+  }
 }
 
-// Method that returns the the present selected option.
-MenuOptions getCurrentMenuOption() {
-  return menuOption; // Returns the stored present selected option.
+void MoistureMenuState::display() {
+  displayMenu(name, menuOtionsStr, menuSize, menuIndex);
+}
+
+// Implementación de IrrigationMenuState
+IrrigationMenuState::IrrigationMenuState() {
+  name = "MENU RIEGO";
+  menuSize = 2;
+  String options[] = {"Calibrar", "Regar"};
+  for (int i = 0; i < menuSize; i++) {
+    menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
+  }
+}
+
+void IrrigationMenuState::handleInput(int input) {
+  if (input == BTN_DOWN) {
+    menuIndex++;
+    if (menuIndex >= menuSize)
+      menuIndex = 0;
+  } else if (input == BTN_UP) {
+    menuIndex--;
+    if (menuIndex < 0)
+      menuIndex = menuSize - 1;
+  } else if (input == BTN_ENTER) {
+    switch (menuIndex) {
+    case 0:
+      // Navegar al submenú 1
+      currentMenuState = &subMenu1State;
+      break;
+    case 1:
+      // Navegar al submenú 2
+      currentMenuState = &subMenu2State;
+    case 2:
+      // Navegar al submenú 3
+      currentMenuState = &subMenu3State;
+    default:
+      break;
+    }
+  } else if (input == BTN_ESC) {
+    currentMenuState = &mainMenuState;
+  }
+}
+
+void IrrigationMenuState::display() {
+  displayMenu(name, menuOtionsStr, menuSize, menuIndex);
+}
+
+// Implementación de SubMenuState
+SubMenuState::SubMenuState(const char *name) : name(name) {}
+
+void SubMenuState::handleInput(int input) {
+  if (input == 0) {
+    // Volver al menú principal
+    currentMenuState = &mainMenuState;
+  } else {
+    // Realizar acciones específicas del submenú
+    Serial.print("Acción en ");
+    Serial.print(name);
+    Serial.print(": ");
+    Serial.println(input);
+  }
+}
+
+void SubMenuState::display() {
+  Serial.print("=== ");
+  Serial.print(name);
+  Serial.println(" ===");
+  Serial.println("0. Volver al menú principal");
+  Serial.println("1. Acción 1");
+  Serial.println("2. Acción 2");
+  Serial.println("3. Acción 3");
 }
