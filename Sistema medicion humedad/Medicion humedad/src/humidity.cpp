@@ -74,6 +74,11 @@ void getHumidityRead() {
   int humidityRead = analogRead(humSensorPin);
   int humAverage = getAverage(humidityRead);
   humAveragePercent = (int)map(humAverage, maxDryness, maxHumidity, 0, 100);
+
+  if (humAveragePercent > 100 || humAveragePercent < 0) {
+    humAveragePercent = -1;
+  }
+
   Serial.print("Humedad bruta: ");
   Serial.println(humidityRead);
   Serial.print("Humedad %: ");

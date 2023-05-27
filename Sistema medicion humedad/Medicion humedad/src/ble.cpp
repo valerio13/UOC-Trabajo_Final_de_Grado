@@ -92,10 +92,7 @@ void bleLoop() {
   }
 
   if (deviceConnected) {
-    static char humidityTemp[6];
-    dtostrf(humAveragePercent, 6, 2, humidityTemp);
-    // Set humidity Characteristic value and notify connected client
-    pHumudityCharacteristic->setValue(humidityTemp);
+    pHumudityCharacteristic->setValue(humAveragePercent);
     txValue++;
     delay(1000);
   }
