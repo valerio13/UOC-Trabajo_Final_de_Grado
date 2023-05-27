@@ -1,16 +1,18 @@
-#ifndef MENU_H
-#define MENU_H
+#ifndef PAGESTATE_H
+#define PAGESTATE_H
 
 #include <Arduino.h>
 
-class MenuState;
+class PageState;
+class MainPageState;
 class MainMenuState;
 class SubMenuState;
 class MoistureMenuState;
 class IrrigationMenuState;
 
 // Declaración de la variable global externa
-extern MenuState *currentMenuState;
+extern PageState *currentPageState;
+extern MainPageState mainPageState;
 extern MainMenuState mainMenuState;
 extern MoistureMenuState moistureMenuState;
 extern IrrigationMenuState irrigationMenuState;
@@ -20,10 +22,11 @@ extern SubMenuState subMenu2State;
 extern SubMenuState subMenu3State;
 
 // Clase abstracta que define el estado base
-class MenuState {
+class PageState {
 public:
   virtual void handleInput(int input) = 0;
   virtual void display() = 0;
+  virtual void loopPageState() {}
 
 protected:
   String name;
@@ -33,37 +36,49 @@ protected:
 };
 
 // Implementación de un estado concreto
-class MainMenuState : public MenuState {
+class MainPageState : public PageState {
+public:
+  MainPageState();
+  void handleInput(int input) override;
+  void display() override;
+  void loopPageState() override;
+};
+
+// Implementación de un estado concreto
+class MainMenuState : public PageState {
 public:
   MainMenuState();
   void handleInput(int input) override;
   void display() override;
+  // void loopPageState() override;
 };
 
 // Implementación de un estado concreto
-class MoistureMenuState : public MenuState {
+class MoistureMenuState : public PageState {
 public:
   MoistureMenuState();
   void handleInput(int input) override;
   void display() override;
+  // void loopPageState() override;
 };
 
 // Implementación de un estado concreto
-class IrrigationMenuState : public MenuState {
+class IrrigationMenuState : public PageState {
 public:
   IrrigationMenuState();
   void handleInput(int input) override;
   void display() override;
+  // void loopPageState() override;
 };
 
 // Implementación de un estado concreto
-class SubMenuState : public MenuState {
+class SubMenuState : public PageState {
 public:
   SubMenuState(const char *name);
   void handleInput(int input) override;
   void display() override;
-
+  // void loopPageState() override;
 private:
   const char *name;
 };
-#endif // MENU_H
+#endif

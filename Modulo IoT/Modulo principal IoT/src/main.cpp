@@ -3,14 +3,13 @@
 ///   Projecte d'interacció tangible
 //////////////////////////////////////////////
 
-#include "Menu.h"        //Included the file to manage the menu
-#include "OledDisplay.h" //Included the file to drive the Oled display
 #include <Arduino.h>
+#include <OledDisplay.h> //Included the file to drive the Oled display
+#include <PageState.h>   //Included the file to manage the menu
 #include <ble.h>
 #include <config.h>
 
 #define DELAY 500 // Define the delay time used in the loop method
-#define HUM_DELAY 30000
 #define PRESS_BUTTON_DELAY                                                     \
   500 // Define the delay time used in the read buttons loop
 
@@ -18,6 +17,7 @@ void MonitoringButtons();
 void checkHumidity();
 
 // Variables globales
+MainPageState mainPageState;
 MainMenuState mainMenuState;
 MoistureMenuState moistureMenuState;
 IrrigationMenuState irrigationMenuState;
@@ -25,10 +25,10 @@ SubMenuState subMenu1State("Submenú 1");
 SubMenuState subMenu2State("Submenú 2");
 SubMenuState subMenu3State("Submenú 3");
 
-MenuState *currentMenuState = &mainMenuState;
+PageState *currentPageState = &mainMenuState;
 
 // Declaración de la variable global externa
-extern MenuState *currentMenuState;
+extern PageState *currentPageState;
 
 // Enum representing the state of the aplication
 enum AppState { RUNNING, MENU, SUBMENU };
@@ -40,7 +40,7 @@ AppState appState =
 void setup() {
   Serial.begin(921600); // Setting the serial speed
   Serial.println("Módulo IoT");
-  
+
   setupDisplay();                        // Call the setup display method
   displayInitialMessage("Iniciando..."); // Call the display initial
                                          // message method
@@ -49,7 +49,8 @@ void setup() {
   pinMode(BTN_ENTER, INPUT);             // Setup input for right button
   pinMode(BTN_ESC, INPUT);               // Setup input for right button
 
-  // setupBle();
+  setupBle();
+  currentPageState->loopPageState();
 }
 
 // The loop method
@@ -60,32 +61,7 @@ void loop() {
   long now = millis();
   if (abs(now - lastTime) > DELAY) {
     lastTime = now; // Stores the last time that this "if" was executed.
-
-    switch (appState) { // Switch atatement to check the aplication state.
-    case RUNNING:       // Code executed if the appState is running.
-      // checkHumidity();
-      break;      // Code necessary to don't execute the code below.
-    case SUBMENU: // Code executed if the submenu opcion was choose.
-      // When a submenu is selected or calibrating humidity or calibrating
-      // dryness was selected.
-
-      // MenuOptions menuOption =
-      //     getCurrentMenuOption(); // We need to know if the calibrating
-      //                             // humidity or calibrating dryness was
-      //                             // selected.
-      // if (menuOption ==
-      //     HUMIDITY_MAIN_MENU) // If the calibrating humidity was selected.
-      //   displaySubMenu(menuOption,
-      //                  100); // We display the maximum humidity
-      //                        // value sended from the sensor.
-      // else if (menuOption ==
-      //          IRRIGATION_MAIN_MENU) // If the calibrating dryness was
-      //          selected.
-      //   displaySubMenu(menuOption,
-      //                  11); // We display the maximum dryness
-      //                       // value sended from the sensor.
-      break;
-    }
+    currentPageState->loopPageState();
   }
 }
 
@@ -108,62 +84,27 @@ void MonitoringButtons() {
     int btnEscStateNow = digitalRead(BTN_ESC);
     int btnUpStateNow = digitalRead(BTN_UP);
 
-    bool downButtonPressed = btnDownStateBefore == LOW && btnDownStateNow == HIGH;
-    bool upButtonPressed = btnUpStateBefore == LOW && btnUpStateNow == HIGH;
-    bool enterButtonPressed = btnEnterStateBefore == LOW && btnEnterStateNow == HIGH;
-    bool escButtonPressed = btnEscStateBefore == LOW && btnEscStateNow == HIGH;
+    int buttonPressed = BTN_NONE;
 
-    switch (appState)
-    {
-    case RUNNING:
-      if (enterButtonPressed || escButtonPressed) {
-        currentMenuState = &mainMenuState;
-        currentMenuState->display();
-        appState = MENU;
-      }
-      break;
-    case MENU:
-      if (downButtonPressed) {
-        currentMenuState->handleInput(BTN_DOWN);
-        currentMenuState->display();
-      } else if (upButtonPressed) {
-        currentMenuState->handleInput(BTN_UP);
-        currentMenuState->display();
-      } else if (enterButtonPressed) {
-        currentMenuState->handleInput(BTN_ENTER);
-        currentMenuState->display();
-      } else if (escButtonPressed) {
-        currentMenuState->handleInput(BTN_ESC);
-        currentMenuState->display();
-      }
-      break;
+    if (btnDownStateBefore == LOW && btnDownStateNow == HIGH) {
+      buttonPressed = BTN_DOWN;
+    } else if (btnUpStateBefore == LOW && btnUpStateNow == HIGH) {
+      buttonPressed = BTN_UP;
+    } else if (btnEnterStateBefore == LOW && btnEnterStateNow == HIGH) {
+      buttonPressed = BTN_ENTER;
+    } else if (btnEscStateBefore == LOW && btnEscStateNow == HIGH) {
+      buttonPressed = BTN_ESC;
     }
 
+    // Actualizar el estado anterior de los botones
     btnDownStateBefore = btnDownStateNow;
     btnUpStateBefore = btnUpStateNow;
     btnEnterStateBefore = btnEnterStateNow;
     btnEscStateBefore = btnEscStateNow;
-  }
-}
 
-void checkHumidity() {
-  static long lastTime = 0;
-  long now = millis();
-  if (abs(now - lastTime) > HUM_DELAY) {
-    lastTime = now; // Stores the last time that this "if" was executed.
-
-    displayMessage("Conectando con el", "sensor de humedad", "");
-    delay(1000);
-    std::string value = getBleData();
-
-    String line1 = String("Umbral: ");
-    line1.concat("");
-    line1.concat("%");
-
-    String line2 = String("Humedad: ");
-    line2.concat(value.c_str());
-    line2.concat("%");
-
-    displayMessage("Lectura de humedad", line1, line2);
+    if (buttonPressed != BTN_NONE) {
+      currentPageState->handleInput(buttonPressed);
+      currentPageState->display();
+    }
   }
 }

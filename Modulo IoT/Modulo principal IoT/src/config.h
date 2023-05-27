@@ -50,7 +50,9 @@
 #define BTN_DOWN 17  // Down Button
 #define BTN_ENTER 18 // Down Button
 #define BTN_ESC 19   // Down Button
+#define BTN_NONE -1  // Ningún botón pulsado
 
+#define READ_HUM_DELAY 30000
 // Comment the following to disable internal pullup for Navigate buttons
 // #define NAV_BUTTONS_INPUT_PULLUP
 
@@ -63,3 +65,11 @@
 
 #define fontX 12
 #define fontY 16
+
+#define BLE_SERVER_NAME "SISTEMA HUMEDAD"
+#define SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
+#define HUMIDITY_CHARACTERISTIC_UUID "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
+#define MAX_CALIB_HUMIDITY_CHARACTERISTIC_UUID                                 \
+  "292f129c-f94f-4c8b-91b3-3f3a17f2ba0d"
+#define MAX_CALIB_DRYNESS_CHARACTERISTIC_UUID                                  \
+  "d5db8f5f-9f28-4786-ae66-8b1e332ab298"

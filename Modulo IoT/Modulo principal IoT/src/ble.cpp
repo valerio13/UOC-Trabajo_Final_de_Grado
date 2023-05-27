@@ -4,15 +4,16 @@
 //
 */
 
-#include "BLEDevice.h"
 #include <Arduino.h>
+#include <BLEDevice.h>
 #include <Wire.h>
+#include <config.h>
 
 // The remote service we wish to connect to.
-static BLEUUID serviceUUID("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
+// static BLEUUID serviceUUID("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
 // The characteristic of the remote service we are interested in.
-static BLEUUID charUUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E");
-#define bleServerName "Bluetooth test"
+// static BLEUUID charUUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E");
+// #define bleServerName "Bluetooth test"
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -42,20 +43,21 @@ bool connectToServer() {
                               // device address (public or private)
   Serial.println(" - Connected to server");
   // Obtain a reference to the service we are after in the remote BLE server.
-  BLERemoteService *pRemoteService = pClient->getService(serviceUUID);
+  BLERemoteService *pRemoteService = pClient->getService(SERVICE_UUID);
   if (pRemoteService == nullptr) {
     Serial.print("Failed to find our service UUID: ");
-    Serial.println(serviceUUID.toString().c_str());
+    Serial.println(SERVICE_UUID);
     pClient->disconnect();
     return false;
   }
   Serial.println(" - Found our service");
   // Obtain a reference to the characteristic in the service of the remote BLE
   // server.
-  pRemoteCharacteristic = pRemoteService->getCharacteristic(charUUID);
+  pRemoteCharacteristic =
+      pRemoteService->getCharacteristic(HUMIDITY_CHARACTERISTIC_UUID);
   if (pRemoteCharacteristic == nullptr) {
     Serial.print("Failed to find our characteristic UUID: ");
-    Serial.println(charUUID.toString().c_str());
+    Serial.println(HUMIDITY_CHARACTERISTIC_UUID);
     pClient->disconnect();
     return false;
   }
@@ -74,7 +76,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     Serial.print("BLE Advertised Device found: ");
     Serial.println(advertisedDevice.toString().c_str());
-    if (advertisedDevice.getName() == bleServerName) {
+    if (advertisedDevice.getName() == BLE_SERVER_NAME) {
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
