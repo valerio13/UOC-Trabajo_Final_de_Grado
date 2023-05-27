@@ -6,7 +6,6 @@
 #include <Adafruit_GFX.h> //Library for graphic displays.
 #include <Wire.h>         //I2C bus library.
 
-#include "Menu.h" //Include the Menu file.
 #include <Adafruit_SH1106.h>
 #include <config.h>
 

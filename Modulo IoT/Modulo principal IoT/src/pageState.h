@@ -2,6 +2,7 @@
 #define PAGESTATE_H
 
 #include <Arduino.h>
+#include <Preferences.h>
 
 class PageState;
 class MainPageState;
@@ -20,6 +21,9 @@ extern IrrigationMenuState irrigationMenuState;
 extern SubMenuState subMenu1State;
 extern SubMenuState subMenu2State;
 extern SubMenuState subMenu3State;
+
+extern int humidityThreshold;
+extern Preferences preferences;
 
 // Clase abstracta que define el estado base
 class PageState {

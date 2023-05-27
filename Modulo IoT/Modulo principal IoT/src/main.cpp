@@ -25,21 +25,24 @@ SubMenuState subMenu1State("Submenú 1");
 SubMenuState subMenu2State("Submenú 2");
 SubMenuState subMenu3State("Submenú 3");
 
-PageState *currentPageState = &mainMenuState;
+PageState *currentPageState = &mainPageState;
 
 // Declaración de la variable global externa
 extern PageState *currentPageState;
 
-// Enum representing the state of the aplication
-enum AppState { RUNNING, MENU, SUBMENU };
-
-AppState appState =
-    RUNNING; // Variable that stores the states of the aplication
+Preferences preferences;
+int humidityThreshold = 50;
+int humidityValue = 0;
 
 // The Setup method
 void setup() {
   Serial.begin(921600); // Setting the serial speed
   Serial.println("Módulo IoT");
+
+  preferences.begin("my-app", false); // inicializar preferences
+  humidityThreshold = preferences.getInt("humidityThreshold", 50);
+  Serial.print("humidityThreshold:");
+  Serial.println(humidityThreshold);
 
   setupDisplay();                        // Call the setup display method
   displayInitialMessage("Iniciando..."); // Call the display initial
@@ -50,7 +53,8 @@ void setup() {
   pinMode(BTN_ESC, INPUT);               // Setup input for right button
 
   setupBle();
-  currentPageState->loopPageState();
+
+  Serial.println("fin setup");
 }
 
 // The loop method
@@ -60,6 +64,7 @@ void loop() {
                             // that the app enters in the "if" statement below.
   long now = millis();
   if (abs(now - lastTime) > DELAY) {
+
     lastTime = now; // Stores the last time that this "if" was executed.
     currentPageState->loopPageState();
   }

@@ -3,6 +3,7 @@
 #include <PageState.h>
 #include <ble.h>
 #include <config.h>
+#include <globals.h>
 
 // Declaración de la variable global externa
 extern PageState *currentPageState;
@@ -10,7 +11,7 @@ extern PageState *currentPageState;
 void checkHumidity();
 
 // Implementación de MainPageState
-MainPageState::MainPageState() {}
+MainPageState::MainPageState() { Serial.println("MainPageState"); }
 
 void MainPageState::handleInput(int input) {
   if (input == BTN_ENTER || input == BTN_ESC) {
@@ -19,11 +20,16 @@ void MainPageState::handleInput(int input) {
 }
 
 void MainPageState::display() {}
-void MainPageState::loopPageState() { checkHumidity(); }
+
+void MainPageState::loopPageState() {
+  Serial.println("MainPageState::loopPageState");
+  checkHumidity();
+}
 
 // Implementación de MainMenuState
 MainMenuState::MainMenuState() {
   name = "MENU PRINCIPAL";
+  Serial.println(name);
   menuSize = 3;
   String options[] = {"Modulo humedad", "Modulo riego", "Servicio IoT"};
   for (int i = 0; i < menuSize; i++) {
@@ -66,6 +72,7 @@ void MainMenuState::display() {
 // Implementación de MoistureMenuState
 MoistureMenuState::MoistureMenuState() {
   name = "MENU HUMEDAD";
+  Serial.println("name");
   menuSize = 3;
   String options[] = {"Configurar umbral", "Calibrar sequedad",
                       "Calibrar humedad max"};
@@ -112,6 +119,7 @@ void MoistureMenuState::display() {
 // Implementación de IrrigationMenuState
 IrrigationMenuState::IrrigationMenuState() {
   name = "MENU RIEGO";
+  Serial.println("name");
   menuSize = 2;
   String options[] = {"Calibrar", "Regar"};
   for (int i = 0; i < menuSize; i++) {
@@ -154,8 +162,9 @@ void IrrigationMenuState::display() {
 }
 
 // Implementación de SubMenuState
-SubMenuState::SubMenuState(const char *name) : name(name) {}
-// void SubMenuState::loopPageState() { int i = 0; }
+SubMenuState::SubMenuState(const char *name) : name(name) {
+  Serial.println("name");
+}
 
 void SubMenuState::handleInput(int input) {
   if (input == 0) {
@@ -188,16 +197,20 @@ void checkHumidity() {
 
     displayMessage("Conectando con el", "sensor de humedad", "");
     delay(1000);
-    std::string value = getBleData();
+    humidityValue = getBleData();
 
     String line1 = String("Umbral: ");
-    line1.concat("");
+    line1.concat(humidityThreshold);
     line1.concat("%");
 
     String line2 = String("Humedad: ");
-    line2.concat(value.c_str());
+    line2.concat(humidityValue);
     line2.concat("%");
 
-    displayMessage("Lectura de humedad", line1, line2);
+    if (humidityValue > humidityThreshold) {
+      displayMessage("Lectura de humedad", line1, line2);
+    } else {
+      displayErrorMessage("La planta necesita agua!", line1, line2);
+    }
   }
 }

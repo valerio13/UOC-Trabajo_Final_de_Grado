@@ -4,6 +4,6 @@
 #include <Arduino.h>
 
 void setupBle();
-std::string getBleData();
+int getBleData();
 
 #endif

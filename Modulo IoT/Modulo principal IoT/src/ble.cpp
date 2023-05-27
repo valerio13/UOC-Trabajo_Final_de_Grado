@@ -77,6 +77,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
     Serial.print("BLE Advertised Device found: ");
     Serial.println(advertisedDevice.toString().c_str());
     if (advertisedDevice.getName() == BLE_SERVER_NAME) {
+      Serial.println("conección inicial");
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
@@ -86,8 +87,7 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
 };    // MyAdvertisedDeviceCallbacks
 
 void setupBle() {
-  Serial.begin(921600);
-  Serial.println("Starting Arduino BLE Client application...");
+  Serial.println("Starting BLE Client...");
   BLEDevice::init("");
 
   BLEScan *pBLEScan = BLEDevice::getScan();
@@ -99,7 +99,9 @@ void setupBle() {
 } // End of setup.
 
 // This is the Arduino main loop function.
-std::string getBleData() {
+int getBleData() {
+  Serial.println("getBleData()");
+
   if (doConnect == true) {
     if (connectToServer()) {
       Serial.println("We are now connected to the BLE Server.");
@@ -110,13 +112,13 @@ std::string getBleData() {
     doConnect = false;
   }
 
-  std::string value = "--";
+  int value = 0;
 
   if (connected) {
     if (pRemoteCharacteristic->canRead()) {
-      value = pRemoteCharacteristic->readValue();
+      value = pRemoteCharacteristic->readUInt16();
       Serial.print("Humedad: ");
-      Serial.println(value.c_str());
+      Serial.println(value);
     }
   } else if (doScan) {
     BLEDevice::getScan()->start(0);
