@@ -9,6 +9,9 @@
 extern PageState *currentPageState;
 
 void checkHumidity();
+void displayHumidityData();
+
+int tempThreshold;
 
 // Implementación de MainPageState
 MainPageState::MainPageState() { Serial.println("MainPageState"); }
@@ -19,12 +22,9 @@ void MainPageState::handleInput(int input) {
   }
 }
 
-void MainPageState::display() {}
+void MainPageState::display() { displayHumidityData(); }
 
-void MainPageState::loopPageState() {
-  Serial.println("MainPageState::loopPageState");
-  checkHumidity();
-}
+void MainPageState::loopPageState() { checkHumidity(); }
 
 // Implementación de MainMenuState
 MainMenuState::MainMenuState() {
@@ -57,11 +57,12 @@ void MainMenuState::handleInput(int input) {
       break;
     case 2:
       // Navegar al submenú 3
-      currentPageState = &subMenu3State;
+      // currentPageState = &subMenuState;
       break;
     }
-  } else if (input == BTN_ENTER) {
+  } else if (input == BTN_ESC) {
     currentPageState = &mainPageState;
+    menuIndex = 0;
   }
 }
 
@@ -94,15 +95,16 @@ void MoistureMenuState::handleInput(int input) {
   } else if (input == BTN_ENTER) {
     switch (menuIndex) {
     case 0:
-      // Navegar al submenú 1
-      currentPageState = &subMenu1State;
+      // Navegar a la página de configuración del umbral
+      currentPageState = &thresholdPageState;
+      currentPageState->display();
       break;
     case 1:
       // Navegar al submenú 2
-      currentPageState = &subMenu2State;
+      // currentPageState = &subMenu2State;
     case 2:
       // Navegar al submenú 3
-      currentPageState = &subMenu3State;
+      // currentPageState = &subMenu3State;
     default:
       break;
     }
@@ -140,14 +142,14 @@ void IrrigationMenuState::handleInput(int input) {
     switch (menuIndex) {
     case 0:
       // Navegar al submenú 1
-      currentPageState = &subMenu1State;
+      // currentPageState = &subMenu1State;
       break;
     case 1:
       // Navegar al submenú 2
-      currentPageState = &subMenu2State;
+      // currentPageState = &subMenu2State;
     case 2:
       // Navegar al submenú 3
-      currentPageState = &subMenu3State;
+      // currentPageState = &subMenu3State;
     default:
       break;
     }
@@ -161,34 +163,48 @@ void IrrigationMenuState::display() {
   displayMenu(name, menuOtionsStr, menuSize, menuIndex);
 }
 
-// Implementación de SubMenuState
-SubMenuState::SubMenuState(const char *name) : name(name) {
-  Serial.println("name");
+// Implementación de IrrigationMenuState
+ThresholdPageState::ThresholdPageState() {
+  name = "Configuracion umbral";
 }
 
-void SubMenuState::handleInput(int input) {
-  if (input == 0) {
-    // Volver al menú principal
-    currentPageState = &mainMenuState;
-  } else {
-    // Realizar acciones específicas del submenú
-    Serial.print("Acción en ");
-    Serial.print(name);
-    Serial.print(": ");
-    Serial.println(input);
+bool thrHandleInputFirstTime = true;
+
+void ThresholdPageState::handleInput(int input) {
+  if (thrHandleInputFirstTime)
+    tempThreshold = humidityThreshold;
+  thrHandleInputFirstTime = false;
+ 
+  if (input == BTN_UP) {
+    tempThreshold++;
+    if (tempThreshold >= 100)
+      tempThreshold = 100;
+    display();
+  } else if (input == BTN_DOWN) {
+    tempThreshold--;
+    if (tempThreshold < 0)
+      tempThreshold = 0;
+    display();
+  } else if (input == BTN_ENTER) {
+    preferences.putInt(HUMIDITY_THRESHOLD_STR, tempThreshold);
+    humidityThreshold =
+        preferences.getInt(HUMIDITY_THRESHOLD_STR, tempThreshold);
+  } else if (input == BTN_ESC) {
+    currentPageState = &moistureMenuState;
+    thrHandleInputFirstTime = true;
   }
 }
 
-void SubMenuState::display() {
-  Serial.print("=== ");
-  Serial.print(name);
-  Serial.println(" ===");
-  Serial.println("0. Volver al menú principal");
-  Serial.println("1. Acción 1");
-  Serial.println("2. Acción 2");
-  Serial.println("3. Acción 3");
+void ThresholdPageState::display() {
+  String description = "Nuevo umbral:";
+  if (thrHandleInputFirstTime)
+    tempThreshold = humidityThreshold;
+  thrHandleInputFirstTime = false;
+
+  displaySubMenuStr(name, description, String(tempThreshold));
 }
 
+// Métodos específicos
 void checkHumidity() {
   static long lastTime = 0;
   long now = millis();
@@ -198,19 +214,22 @@ void checkHumidity() {
     displayMessage("Conectando con el", "sensor de humedad", "");
     delay(1000);
     humidityValue = getBleData();
+    displayHumidityData();
+  }
+}
 
-    String line1 = String("Umbral: ");
-    line1.concat(humidityThreshold);
-    line1.concat("%");
+void displayHumidityData() {
+  String line1 = String("Umbral: ");
+  line1.concat(humidityThreshold);
+  line1.concat("%");
 
-    String line2 = String("Humedad: ");
-    line2.concat(humidityValue);
-    line2.concat("%");
+  String line2 = String("Humedad: ");
+  line2.concat(humidityValue);
+  line2.concat("%");
 
-    if (humidityValue > humidityThreshold) {
-      displayMessage("Lectura de humedad", line1, line2);
-    } else {
-      displayErrorMessage("La planta necesita agua!", line1, line2);
-    }
+  if (humidityValue > humidityThreshold) {
+    displayMessage("Lectura de humedad", line1, line2);
+  } else {
+    displayErrorMessage("La planta necesita agua!", line1, line2);
   }
 }

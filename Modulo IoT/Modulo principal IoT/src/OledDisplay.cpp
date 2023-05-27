@@ -105,7 +105,8 @@ void displayErrorMessage(String line1, String line2, String line3) {
 }
 
 // Method that displays the main menu.
-void displayMenu(String title, String *pdata, byte length, byte selectedOption) {
+void displayMenu(String title, String *pdata, byte length,
+                 byte selectedOption) {
   oled.clearDisplay(); // Clean the screen.
 
   for (int i = 0; i < length; i++) { // Loop to display the menu options.
@@ -134,8 +135,10 @@ void displayMenu(String title, String *pdata, byte length, byte selectedOption) 
   oled.print(title);        // Set the text of the menu title.
 
   // oled.fillRect(0, 55, oled.width(), 12,
-  //               WHITE);     // Draw a white filled rectangle in the bottom side.
-  //                           // Here will be displayed the button function text.
+  //               WHITE);     // Draw a white filled rectangle in the bottom
+  //               side.
+  //                           // Here will be displayed the button function
+  //                           text.
   // oled.setTextColor(BLACK); // Set the text color to black.
 
   // oled.setCursor(5, 56); // Locate cursor at given coordinates.
@@ -150,8 +153,7 @@ void displayMenu(String title, String *pdata, byte length, byte selectedOption) 
 }
 
 // Method that displays the submenu page.
-void displaySubMenuStr(String subMenuTitle, String description,
-                       String humValeu) {
+void displaySubMenuStr(String subMenuTitle, String description, String value) {
   oled.clearDisplay(); // limpia pantalla
 
   oled.setTextColor(WHITE); // Set the text color to white.
@@ -165,7 +167,7 @@ void displaySubMenuStr(String subMenuTitle, String description,
 
   oled.setCursor(2, 32); // Locate cursor at given coordinates.
   oled.setTextSize(1);   // Set text size to 2.
-  oled.print(humValeu);  // Set the humidity value text.
+  oled.print(value);     // Set the humidity value text.
 
   oled.setTextColor(BLACK); // Set the text color to black.
   oled.fillRect(0, 55, oled.width(), 12,
@@ -181,19 +183,3 @@ void displaySubMenuStr(String subMenuTitle, String description,
 
   oled.display(); // Displays everything previously set on the screen.
 }
-
-// // Method that displays the submenu page after the selection.
-// void displaySubMenu(MenuOptions menuOption, int humValeu) {
-//   switch (menuOption) {    // Switch with the selected option.
-//   case HUMIDITY_MAIN_MENU: // If the option is humidity...
-//     displaySubMenuStr(
-//         "CALIBRAR", "Humedad",
-//         String(humValeu)); // It will displays the calibrate humidity page.
-//     break;                 // Command necessary to don't execute the code below.
-//   case IRRIGATION_MAIN_MENU: // If the option is dryness...
-//     displaySubMenuStr(
-//         "CALIBRAR", "Sequedad",
-//         String(humValeu)); // It will displays the calibrate dryness page.
-//     break;                 // Command necessary to don't execute the code below.
-//   }
-// }

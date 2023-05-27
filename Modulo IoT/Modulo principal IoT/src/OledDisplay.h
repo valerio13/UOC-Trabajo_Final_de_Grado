@@ -28,7 +28,6 @@ void displayErrorMessage(
 void displayMenu(String title, String *pdata, byte length,
                  byte selectedOption); // Method that displays the main menu.
 
-// void displaySubMenu(MenuOptions menuOption, int humValeu);    //Method that
-// displays the submenu page after the selection.
+void displaySubMenuStr(String subMenuTitle, String description, String value);
 
 #endif // End of define instruction.

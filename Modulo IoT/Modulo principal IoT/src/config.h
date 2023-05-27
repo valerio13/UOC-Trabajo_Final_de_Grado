@@ -73,3 +73,5 @@
   "292f129c-f94f-4c8b-91b3-3f3a17f2ba0d"
 #define MAX_CALIB_DRYNESS_CHARACTERISTIC_UUID                                  \
   "d5db8f5f-9f28-4786-ae66-8b1e332ab298"
+
+#define HUMIDITY_THRESHOLD_STR "humThresh"

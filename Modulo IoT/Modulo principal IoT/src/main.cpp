@@ -21,9 +21,7 @@ MainPageState mainPageState;
 MainMenuState mainMenuState;
 MoistureMenuState moistureMenuState;
 IrrigationMenuState irrigationMenuState;
-SubMenuState subMenu1State("Submenú 1");
-SubMenuState subMenu2State("Submenú 2");
-SubMenuState subMenu3State("Submenú 3");
+ThresholdPageState thresholdPageState;
 
 PageState *currentPageState = &mainPageState;
 
@@ -40,7 +38,7 @@ void setup() {
   Serial.println("Módulo IoT");
 
   preferences.begin("my-app", false); // inicializar preferences
-  humidityThreshold = preferences.getInt("humidityThreshold", 50);
+  humidityThreshold = preferences.getInt(HUMIDITY_THRESHOLD_STR, 50);
   Serial.print("humidityThreshold:");
   Serial.println(humidityThreshold);
 
