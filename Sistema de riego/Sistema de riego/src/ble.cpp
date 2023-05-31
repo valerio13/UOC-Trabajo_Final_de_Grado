@@ -24,12 +24,12 @@ unsigned long timerDelay = 3000;
 // extern AppState currentAppState;
 
 void processData(std::string data);
+void activateOutput(int output, int activationTime);
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
 
-class MyServerCallbacks : public BLEServerCallbacks
-{
+class MyServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *pServer) { deviceConnected = true; };
 
   void onDisconnect(BLEServer *pServer) { deviceConnected = false; }
@@ -63,7 +63,7 @@ void bleSetup() {
 
   // Característica calibrar máxima humedad
   pCalibHumudityCharacteristic = pService->createCharacteristic(
-      START_WATERING_CHAR_UUID, BLECharacteristic::PROPERTY_READ);
+      START_WATERING_CHAR_UUID, BLECharacteristic::PROPERTY_WRITE);
   pCalibHumudityCharacteristic->addDescriptor(new BLE2902());
   pCalibHumudityCharacteristic->setCallbacks(new StartWateringCallbacks());
 
@@ -98,16 +98,44 @@ void bleLoop() {
 
 void processData(std::string data) {
   std::stringstream ss(data);
-  int outputNum, runningTime;
+  int output, activationTime;
 
   // Verificar que haya exactamente dos enteros en rxValue
-  if (ss >> outputNum && ss >> runningTime && ss.eof()) {
+  if (ss >> output && ss >> activationTime && ss.eof()) {
     // Los dos enteros fueron extraídos correctamente
-    std::cout << "outputNum: " << outputNum << std::endl;
-    std::cout << "runningTime: " << runningTime << std::endl;
-  } else {
+    std::cout << "output: " << output << std::endl;
+    std::cout << "activationTime: " << activationTime << std::endl;
+
+    activateOutput(output, activationTime);
+  }
+  else
+  {
     // No se encontraron dos enteros en rxValue
     std::cout << "Error: los datos recibidos no contiene dos enteros."
               << std::endl;
   }
+}
+
+void activateOutput(int output, int activationTime) {
+  int selectedOutput;
+
+  switch (output) {
+  case 1:
+    selectedOutput = OUTPUT_1;
+    break;
+  case 2:
+    selectedOutput = OUTPUT_2;
+    break;
+  case 3:
+    selectedOutput = OUTPUT_3;
+    break;
+  case 4:
+    selectedOutput = OUTPUT_4;
+    break;
+  }
+  std::cout << "selectedOutput: " << selectedOutput << std::endl;
+
+  digitalWrite(selectedOutput, LOW);
+  delay(activationTime * 1000);
+  digitalWrite(selectedOutput, HIGH);
 }
