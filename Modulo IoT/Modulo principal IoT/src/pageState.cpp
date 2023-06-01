@@ -12,6 +12,8 @@ void checkHumidity();
 void displayHumidityData();
 
 int tempThreshold;
+String calibState;
+bool calibStarted = false;
 
 // Implementación de MainPageState
 MainPageState::MainPageState() { Serial.println("MainPageState"); }
@@ -75,8 +77,8 @@ MoistureMenuState::MoistureMenuState() {
   name = "MENU HUMEDAD";
   Serial.println("name");
   menuSize = 3;
-  String options[] = {"Configurar umbral", "Calibrar sequedad",
-                      "Calibrar humedad max"};
+  String options[] = {"Configurar umbral", "Calibrar humedad max",
+                      "Calibrar sequedad"};
   for (int i = 0; i < menuSize; i++) {
     menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
   }
@@ -100,11 +102,14 @@ void MoistureMenuState::handleInput(int input) {
       currentPageState->display();
       break;
     case 1:
-      // Navegar al submenú 2
-      // currentPageState = &subMenu2State;
+      // Navegar a la página de Calibrar sequedad
+      Serial.println("Selecctionado: calibrationHumPageState");
+      currentPageState = &calibrationHumPageState;
+      break;
     case 2:
-      // Navegar al submenú 3
-      // currentPageState = &subMenu3State;
+      // Navegar a la página de Calibrar humedad max
+      Serial.println("Selecctionado: calibrationDryPageState");
+      currentPageState = &calibrationDryPageState;
     default:
       break;
     }
@@ -164,9 +169,7 @@ void IrrigationMenuState::display() {
 }
 
 // Implementación de IrrigationMenuState
-ThresholdPageState::ThresholdPageState() {
-  name = "Configuracion umbral";
-}
+ThresholdPageState::ThresholdPageState() { name = "Configuracion umbral"; }
 
 bool thrHandleInputFirstTime = true;
 
@@ -174,7 +177,7 @@ void ThresholdPageState::handleInput(int input) {
   if (thrHandleInputFirstTime)
     tempThreshold = humidityThreshold;
   thrHandleInputFirstTime = false;
- 
+
   if (input == BTN_UP) {
     tempThreshold++;
     if (tempThreshold >= 100)
@@ -202,6 +205,50 @@ void ThresholdPageState::display() {
   thrHandleInputFirstTime = false;
 
   displaySubMenuStr(name, description, String(tempThreshold));
+}
+
+// Implementación de IrrigationMenuState
+CalibrationPageState::CalibrationPageState(const char *pagName,
+                                           const char *characteristic)
+    : name(pagName), characteristic(characteristic) {}
+
+void CalibrationPageState::handleInput(int input) {
+  if (input == BTN_ENTER && calibStarted == false) {
+    if (setCalibData(String(characteristic))) {
+      Serial.println("calibStarted = true");
+      calibStarted = true;
+    } else
+      calibStarted = false;
+    Serial.println("calibStarted = false");
+  } else if (input == BTN_ESC) {
+    currentPageState = &moistureMenuState;
+    calibStarted = false;
+  }
+}
+
+void CalibrationPageState::display() {
+  String description;
+  if (!calibStarted) {
+    description = "Iniciar...";
+  }
+  if (calibState == START_CALIB) {
+    description = "Iniciando...";
+  } else if (calibState == CALIB_ON) {
+    description = "En curso.";
+  } else if (calibState == CALIB_OK) {
+    description = "Finalizada correctamente.";
+  } else if (calibState == CALIB_NOK) {
+    description = "Error";
+  }
+
+  displaySubMenuStr(name, description, "");
+}
+
+void CalibrationPageState::loopPageState() {
+  if (calibStarted) {
+    calibState = getCalibData(String(characteristic));
+  }
+  display();
 }
 
 // Métodos específicos

@@ -1,4 +1,5 @@
-/*config.h*/
+#ifndef CONFIG_H
+#define CONFIG_H
 
 /* List of Supported Fonts
  *
@@ -68,10 +69,15 @@
 
 #define BLE_SERVER_NAME "SISTEMA HUMEDAD"
 #define SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
-#define HUMIDITY_CHARACTERISTIC_UUID "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
-#define MAX_CALIB_HUMIDITY_CHARACTERISTIC_UUID                                 \
-  "292f129c-f94f-4c8b-91b3-3f3a17f2ba0d"
-#define MAX_CALIB_DRYNESS_CHARACTERISTIC_UUID                                  \
-  "d5db8f5f-9f28-4786-ae66-8b1e332ab298"
+#define HUM_CHAR_UUID "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
+#define MAX_CALIB_HUM_CHAR_UUID "292f129c-f94f-4c8b-91b3-3f3a17f2ba0d"
+#define MAX_CALIB_DRYNESS_HUM_CHAR_UUID "d5db8f5f-9f28-4786-ae66-8b1e332ab298"
 
 #define HUMIDITY_THRESHOLD_STR "humThresh"
+
+#define START_CALIB "c_s"
+#define CALIB_ON "c_on"
+#define CALIB_OK "c_ok"
+#define CALIB_NOK "c_nok"
+
+#endif

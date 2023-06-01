@@ -5,5 +5,6 @@
 
 void setupBle();
 int getBleData();
-
+String getCalibData(String bleCalibCharacteristic);
+bool setCalibData(String bleCalibCharacteristic);
 #endif

@@ -11,6 +11,7 @@ class SubMenuState;
 class MoistureMenuState;
 class IrrigationMenuState;
 class ThresholdPageState;
+class CalibrationPageState;
 
 // Declaración de la variable global externa
 extern PageState *currentPageState;
@@ -19,6 +20,8 @@ extern MainMenuState mainMenuState;
 extern MoistureMenuState moistureMenuState;
 extern IrrigationMenuState irrigationMenuState;
 extern ThresholdPageState thresholdPageState;
+extern CalibrationPageState calibrationHumPageState;
+extern CalibrationPageState calibrationDryPageState;
 
 extern int humidityThreshold;
 extern Preferences preferences;
@@ -79,6 +82,19 @@ public:
   ThresholdPageState();
   void handleInput(int input) override;
   void display() override;
+};
+
+// Implementación de un estado concreto
+class CalibrationPageState : public PageState {
+public:
+  CalibrationPageState(const char *pagName, const char *characteristic);
+  void handleInput(int input) override;
+  void display() override;
+  void loopPageState() override;
+
+private:
+  const char *name;
+  const char *characteristic;
 };
 
 #endif

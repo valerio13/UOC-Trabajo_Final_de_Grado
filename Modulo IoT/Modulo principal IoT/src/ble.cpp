@@ -9,16 +9,14 @@
 #include <Wire.h>
 #include <config.h>
 
-// The remote service we wish to connect to.
-// static BLEUUID serviceUUID("6e400001-b5a3-f393-e0a9-e50e24dcca9e");
-// The characteristic of the remote service we are interested in.
-// static BLEUUID charUUID("6E400003-B5A3-F393-E0A9-E50E24DCCA9E");
-// #define bleServerName "Bluetooth test"
-
 static boolean doConnect = false;
 static boolean connected = false;
 static boolean doScan = false;
-static BLERemoteCharacteristic *pRemoteCharacteristic;
+
+static BLERemoteCharacteristic *pRemoteHumCharacteristic;
+static BLERemoteCharacteristic *pRemoteHumCalibCharacteristic;
+static BLERemoteCharacteristic *pRemoteDryCalibCharacteristic;
+
 static BLEAdvertisedDevice *myDevice;
 bool ledStatus = false;
 
@@ -53,18 +51,33 @@ bool connectToServer() {
   Serial.println(" - Found our service");
   // Obtain a reference to the characteristic in the service of the remote BLE
   // server.
-  pRemoteCharacteristic =
-      pRemoteService->getCharacteristic(HUMIDITY_CHARACTERISTIC_UUID);
-  if (pRemoteCharacteristic == nullptr) {
+  pRemoteHumCharacteristic = pRemoteService->getCharacteristic(HUM_CHAR_UUID);
+  pRemoteHumCalibCharacteristic =
+      pRemoteService->getCharacteristic(MAX_CALIB_HUM_CHAR_UUID);
+  pRemoteDryCalibCharacteristic =
+      pRemoteService->getCharacteristic(MAX_CALIB_DRYNESS_HUM_CHAR_UUID);
+
+  if (pRemoteHumCharacteristic == nullptr) {
     Serial.print("Failed to find our characteristic UUID: ");
-    Serial.println(HUMIDITY_CHARACTERISTIC_UUID);
+    Serial.println(HUM_CHAR_UUID);
+    pClient->disconnect();
+    return false;
+  } else if (pRemoteHumCalibCharacteristic == nullptr) {
+    Serial.print("Failed to find our characteristic UUID: ");
+    Serial.println(MAX_CALIB_HUM_CHAR_UUID);
+    pClient->disconnect();
+    return false;
+  } else if (pRemoteDryCalibCharacteristic == nullptr) {
+    Serial.print("Failed to find our characteristic UUID: ");
+    Serial.println(MAX_CALIB_DRYNESS_HUM_CHAR_UUID);
     pClient->disconnect();
     return false;
   }
-  Serial.println(" - Found our characteristic");
+
+  Serial.println(" - Found all characteristics");
   // Read the value of the characteristic.
-  if (pRemoteCharacteristic->canRead()) {
-    std::string value = pRemoteCharacteristic->readValue();
+  if (pRemoteHumCharacteristic->canRead()) {
+    std::string value = pRemoteHumCharacteristic->readValue();
     Serial.print("The characteristic value was: ");
     Serial.println(value.c_str());
   }
@@ -115,13 +128,85 @@ int getBleData() {
   int value = 0;
 
   if (connected) {
-    if (pRemoteCharacteristic->canRead()) {
-      value = pRemoteCharacteristic->readUInt16();
+    if (pRemoteHumCharacteristic->canRead()) {
+      value = pRemoteHumCharacteristic->readUInt16();
       Serial.print("Humedad: ");
       Serial.println(value);
     }
   } else if (doScan) {
     BLEDevice::getScan()->start(0);
   }
+  return value;
+}
+
+// Lee el estado de la calibración
+String getCalibData(String bleCalibCharacteristic) {
+  Serial.print("getCalibData: ");
+  Serial.println(bleCalibCharacteristic.c_str());
+
+  if (doConnect == true) {
+    if (connectToServer()) {
+      Serial.println("We are now connected to the BLE Server.");
+    } else {
+      Serial.println("We have failed to connect to the server.");
+    }
+    doConnect = false;
+  }
+
+  std::string value = "---";
+
+  if (connected) {
+    if (bleCalibCharacteristic == MAX_CALIB_HUM_CHAR_UUID) {
+      if (pRemoteHumCalibCharacteristic->canRead()) {
+        value = pRemoteHumCalibCharacteristic->readValue();
+      }
+    } else if (bleCalibCharacteristic == MAX_CALIB_DRYNESS_HUM_CHAR_UUID) {
+      if (pRemoteDryCalibCharacteristic->canRead()) {
+        value = pRemoteDryCalibCharacteristic->readValue();
+      }
+    }
+    Serial.print(bleCalibCharacteristic.c_str());
+    Serial.println(value.c_str());
+  } else if (doScan) {
+    BLEDevice::getScan()->start(0);
+  }
+
+  return String(value.c_str());
+}
+
+// Inicia la calibración de humedad o sequedad
+bool setCalibData(String bleCalibCharacteristic) {
+  Serial.print("setCalibData: ");
+  Serial.println(bleCalibCharacteristic.c_str());
+
+  if (doConnect == true) {
+    if (connectToServer()) {
+      Serial.println("We are now connected to the BLE Server.");
+    } else {
+      Serial.println("We have failed to connect to the server.");
+    }
+    doConnect = false;
+  }
+
+  bool value = false;
+
+  if (connected) {
+    if (bleCalibCharacteristic == MAX_CALIB_HUM_CHAR_UUID) {
+      if (pRemoteHumCalibCharacteristic->canRead()) {
+        pRemoteHumCalibCharacteristic->writeValue(START_CALIB);
+        value = true;
+        Serial.println("->writeValue(START_CALIB)");
+      }
+    } else if (bleCalibCharacteristic == MAX_CALIB_DRYNESS_HUM_CHAR_UUID) {
+      if (pRemoteDryCalibCharacteristic->canRead()) {
+        pRemoteDryCalibCharacteristic->writeValue(START_CALIB);
+        value = true;
+        Serial.println("->writeValue(START_CALIB)");
+      }
+    }
+  } else if (doScan) {
+    BLEDevice::getScan()->start(0);
+  }
+
   return value;
 }

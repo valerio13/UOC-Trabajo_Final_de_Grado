@@ -22,6 +22,10 @@ MainMenuState mainMenuState;
 MoistureMenuState moistureMenuState;
 IrrigationMenuState irrigationMenuState;
 ThresholdPageState thresholdPageState;
+CalibrationPageState calibrationHumPageState("Calib. max. humedad",
+                                             MAX_CALIB_HUM_CHAR_UUID);
+CalibrationPageState calibrationDryPageState("Calib. max. sequedad",
+                                             MAX_CALIB_DRYNESS_HUM_CHAR_UUID);
 
 PageState *currentPageState = &mainPageState;
 
