@@ -35,7 +35,7 @@ void humiditySetup() {
   Serial.println(maxDryness);
 }
 
-void calibrateMaxHumidity() {
+bool calibrateMaxHumidity() {
   Serial.println("Calibrando humedad máxima...");
 
   maxHumidity = 99999;
@@ -47,13 +47,15 @@ void calibrateMaxHumidity() {
   }
   if (maxHumidity < maxDryness) {
     preferences.putInt("maxHumidity", maxHumidity);
-    Serial.println("Calibración completada");
+    Serial.println("Calibración MaxHumidity OK");
+    return true;
   } else {
-    Serial.println("Error en la calibración");
+    Serial.println("Error calibración MaxHumidity");
+    return false;
   }
 }
 
-void calibrateMaxDryness() {
+bool calibrateMaxDryness() {
   Serial.println("Calibrando sequedad máxima...");
 
   maxDryness = 0;
@@ -65,8 +67,11 @@ void calibrateMaxDryness() {
   }
   if (maxHumidity < maxDryness) {
     preferences.putInt("maxDryness", maxDryness);
+    Serial.println("Calibración maxDryness OK");
+    return true;
   } else {
-    Serial.println("Error en la calibración");
+    Serial.println("Error calibración MaxHumidity");
+    return false;
   }
 }
 

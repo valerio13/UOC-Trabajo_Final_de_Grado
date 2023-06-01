@@ -14,11 +14,12 @@ BLECharacteristic *pCalibDrynessCharacteristic;
 
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
-uint8_t txValue = 0;
 
 // Timer variables
 unsigned long lastTime = 0;
 unsigned long timerDelay = 3000;
+
+extern AppState currentAppState;
 
 // See the following for generating UUIDs:
 // https://www.uuidgenerator.net/
@@ -29,18 +30,55 @@ class MyServerCallbacks : public BLEServerCallbacks {
   void onDisconnect(BLEServer *pServer) { deviceConnected = false; }
 };
 
-class MyCallbacks : public BLECharacteristicCallbacks {
+class CalibHumidityCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     std::string rxValue = pCharacteristic->getValue();
 
     if (rxValue.length() > 0) {
       Serial.println("*********");
-      Serial.print("Received Value: ");
-      for (int i = 0; i < rxValue.length(); i++)
-        Serial.print(rxValue[i]);
+      Serial.print("Calib Humidity: ");
+      Serial.println(rxValue.c_str());
 
-      Serial.println();
+      if (rxValue == START_CALIB) {
+        Serial.println("Calibrando Humidity");
+        currentAppState = MAX_HUM_CALIB;
+        pCharacteristic->setValue(START_CALIB);
+        if (calibrateMaxHumidity()) {
+          pCharacteristic->setValue(CALIB_OK);
+          Serial.println("Calibrando Humidity");
+          Serial.println("CALIB_OK");
+        } else {
+          pCharacteristic->setValue(CALIB_NOK);
+          Serial.println("CALIB_NOK");
+        }
+        currentAppState = RUNNING;
+      }
+    }
+  }
+};
+
+class CalibDrynessCallbacks : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *pCharacteristic) {
+    std::string rxValue = pCharacteristic->getValue();
+
+    if (rxValue.length() > 0) {
       Serial.println("*********");
+      Serial.print("Calib Dryness: ");
+      Serial.println(rxValue.c_str());
+
+      if (rxValue == START_CALIB) {
+        Serial.println("Calibrando Sequedad");
+        pCharacteristic->setValue(START_CALIB);
+        currentAppState = MAX_DRYNESS_CALIB;
+        if (calibrateMaxDryness()) {
+          pCharacteristic->setValue(CALIB_OK);
+          Serial.println("CALIB_OK");
+        } else {
+          pCharacteristic->setValue(CALIB_NOK);
+          Serial.println("CALIB_NOK");
+        }
+        currentAppState = RUNNING;
+      }
     }
   }
 };
@@ -60,22 +98,22 @@ void bleSetup() {
 
   // Característica humedad
   pHumudityCharacteristic = pService->createCharacteristic(
-      HUMIDITY_CHARACTERISTIC_UUID, BLECharacteristic::PROPERTY_READ);
+      HUM_CHAR_UUID, BLECharacteristic::PROPERTY_READ);
   pHumudityCharacteristic->addDescriptor(new BLE2902());
 
   // Característica calibrar máxima humedad
   pCalibHumudityCharacteristic = pService->createCharacteristic(
-      MAX_HUMIDITY_CHARACTERISTIC_UUID,
+      MAX_HUM_CHAR_UUID,
       BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
   pCalibHumudityCharacteristic->addDescriptor(new BLE2902());
-  pCalibHumudityCharacteristic->setCallbacks(new MyCallbacks());
+  pCalibHumudityCharacteristic->setCallbacks(new CalibHumidityCallbacks());
 
   // Característica calibrar máxima humedad
   pCalibDrynessCharacteristic = pService->createCharacteristic(
-      MAX_DRYNESS_CHARACTERISTIC_UUID,
+      MAX_DRYNESS_CHAR_UUID,
       BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_WRITE);
   pCalibDrynessCharacteristic->addDescriptor(new BLE2902());
-  pCalibDrynessCharacteristic->setCallbacks(new MyCallbacks());
+  pCalibDrynessCharacteristic->setCallbacks(new CalibDrynessCallbacks());
 
   // Start the service
   pService->start();
@@ -86,14 +124,12 @@ void bleSetup() {
 }
 
 void bleLoop() {
-
   if ((millis() - lastTime) < timerDelay) {
     return;
   }
 
   if (deviceConnected) {
     pHumudityCharacteristic->setValue(humAveragePercent);
-    txValue++;
     delay(1000);
   }
 

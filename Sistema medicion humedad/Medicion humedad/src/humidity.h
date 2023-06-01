@@ -5,7 +5,7 @@ extern int humAveragePercent;
 
 void getHumidityRead();
 void humiditySetup();
-void calibrateMaxHumidity();
-void calibrateMaxDryness();
+bool calibrateMaxHumidity();
+bool calibrateMaxDryness();
 
 #endif

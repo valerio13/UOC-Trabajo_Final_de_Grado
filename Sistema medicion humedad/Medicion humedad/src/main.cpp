@@ -9,7 +9,6 @@
 #include <humidity.h>
 #include <sstream>
 #include <string>
-
 const int servoPin = 18;
 
 bool calibratingMin = false;
@@ -39,15 +38,8 @@ void setup() {
 }
 
 void loop() {
-  switch (currentAppState) {
-  case RUNNING:
+  if (currentAppState == RUNNING) {
     executeRunning();
-    break;
-  case MAX_HUM_CALIB:
-    calibrateMaxHumidity();
-    break;
-  case MAX_DRYNESS_CALIB:
-    calibrateMaxDryness();
   }
 
   bleLoop();
