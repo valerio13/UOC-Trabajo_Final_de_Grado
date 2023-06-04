@@ -6,7 +6,7 @@
 #include <Arduino.h>
 #include <OledDisplay.h> //Included the file to drive the Oled display
 #include <PageState.h>   //Included the file to manage the menu
-#include <ble.h>
+#include <bleHumidity.h>
 #include <config.h>
 
 #define DELAY 500 // Define the delay time used in the loop method
@@ -26,6 +26,21 @@ CalibrationPageState calibrationHumPageState("Calib. max. humedad",
                                              MAX_CALIB_HUM_CHAR_UUID);
 CalibrationPageState calibrationDryPageState("Calib. max. sequedad",
                                              MAX_CALIB_DRYNESS_HUM_CHAR_UUID);
+SelectOutputPageState selectOutputPageState;
+
+short offsetSeconds = 0;
+short calibSeconds = 0;
+short runSeconds = 0;
+
+short offsetMenuOption = 0;
+short calibMenuOption = 1;
+short runMenuOption = 2;
+
+IrrigationCalibMenuState irrigationOffsetCalibMenuState(&offsetMenuOption,
+                                                        &offsetSeconds);
+IrrigationCalibMenuState irrigationCalibMenuState(&calibMenuOption,
+                                                  &calibSeconds);
+IrrigationCalibMenuState runIrrigationMenuState(&runMenuOption, &runSeconds);
 
 PageState *currentPageState = &mainPageState;
 
@@ -54,7 +69,11 @@ void setup() {
   pinMode(BTN_ENTER, INPUT);             // Setup input for right button
   pinMode(BTN_ESC, INPUT);               // Setup input for right button
 
-  setupBle();
+  setupBleHumidity();
+
+  offsetSeconds = 0;
+  calibSeconds = 0;
+  runSeconds = 0;
 
   Serial.println("fin setup");
 }

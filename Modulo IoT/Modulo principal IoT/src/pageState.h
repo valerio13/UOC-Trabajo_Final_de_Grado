@@ -12,6 +12,8 @@ class MoistureMenuState;
 class IrrigationMenuState;
 class ThresholdPageState;
 class CalibrationPageState;
+class SelectOutputPageState;
+class IrrigationCalibMenuState;
 
 // Declaración de la variable global externa
 extern PageState *currentPageState;
@@ -22,6 +24,11 @@ extern IrrigationMenuState irrigationMenuState;
 extern ThresholdPageState thresholdPageState;
 extern CalibrationPageState calibrationHumPageState;
 extern CalibrationPageState calibrationDryPageState;
+extern SelectOutputPageState selectOutputPageState;
+
+extern IrrigationCalibMenuState irrigationOffsetCalibMenuState;
+extern IrrigationCalibMenuState irrigationCalibMenuState;
+extern IrrigationCalibMenuState runIrrigationMenuState;
 
 extern int humidityThreshold;
 extern Preferences preferences;
@@ -97,4 +104,31 @@ private:
   const char *characteristic;
 };
 
+// Implementación de SelectOutputPageState
+class SelectOutputPageState : public PageState {
+public:
+  SelectOutputPageState();
+  void handleInput(int input);
+  void display();
+};
+
+// Implementación de un estado concreto
+class IrrigationCalibMenuState : public PageState {
+public:
+  IrrigationCalibMenuState(short *ptrMenuSelection, short *ptrSeconds);
+  void handleInput(int input) override;
+  void display() override;
+
+private:
+  short *ptrActiveSeconds;
+  short *ptrMenuSelection;
+};
+
+// Implementación de SelectOutputPageState
+class SetTimePageState : public PageState {
+public:
+  SetTimePageState();
+  void handleInput(int input);
+  void display();
+};
 #endif

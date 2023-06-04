@@ -1,19 +1,22 @@
+#include "PageState.h"
+#include "OledDisplay.h"
+#include "bleHumidity.h"
+#include "config.h"
+#include "globals.h"
 #include <Arduino.h>
-#include <OledDisplay.h>
-#include <PageState.h>
-#include <ble.h>
-#include <config.h>
-#include <globals.h>
 
 // Declaración de la variable global externa
 extern PageState *currentPageState;
 
 void checkHumidity();
 void displayHumidityData();
+String getIrrigationCalibMenuStateTitle(short *ptrMenuIndex);
 
 int tempThreshold;
 String calibState;
 bool calibStarted = false;
+int irrigationOutput = 0;
+short tempTime = 0;
 
 // Implementación de MainPageState
 MainPageState::MainPageState() { Serial.println("MainPageState"); }
@@ -126,9 +129,9 @@ void MoistureMenuState::display() {
 // Implementación de IrrigationMenuState
 IrrigationMenuState::IrrigationMenuState() {
   name = "MENU RIEGO";
-  Serial.println("name");
-  menuSize = 2;
-  String options[] = {"Calibrar", "Regar"};
+  menuSize = 4;
+  String options[] = {"Selec. salida", "Calib. offset", "Calib. riego",
+                      "Regar"};
   for (int i = 0; i < menuSize; i++) {
     menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
   }
@@ -146,15 +149,20 @@ void IrrigationMenuState::handleInput(int input) {
   } else if (input == BTN_ENTER) {
     switch (menuIndex) {
     case 0:
-      // Navegar al submenú 1
-      // currentPageState = &subMenu1State;
+      // Navegar al menú de selección de salida
+      currentPageState = &selectOutputPageState;
       break;
     case 1:
-      // Navegar al submenú 2
-      // currentPageState = &subMenu2State;
+      // Navegar al menú calibrar offset
+      currentPageState = &irrigationOffsetCalibMenuState;
+      break;
     case 2:
-      // Navegar al submenú 3
-      // currentPageState = &subMenu3State;
+      // Navegar al menú calibrar riego
+      currentPageState = &irrigationCalibMenuState;
+      break;
+    case 3:
+      // Navegar al menú regar
+      currentPageState = &runIrrigationMenuState;
     default:
       break;
     }
@@ -165,10 +173,11 @@ void IrrigationMenuState::handleInput(int input) {
 }
 
 void IrrigationMenuState::display() {
-  displayMenu(name, menuOtionsStr, menuSize, menuIndex);
+  displayMenu(name + " - " + irrigationOutput, menuOtionsStr, menuSize,
+              menuIndex);
 }
 
-// Implementación de IrrigationMenuState
+// Implementación de ThresholdPageState
 ThresholdPageState::ThresholdPageState() { name = "Configuracion umbral"; }
 
 bool thrHandleInputFirstTime = true;
@@ -214,7 +223,7 @@ CalibrationPageState::CalibrationPageState(const char *pagName,
 
 void CalibrationPageState::handleInput(int input) {
   if (input == BTN_ENTER && calibStarted == false) {
-    if (setCalibData(String(characteristic))) {
+    if (setHumidityCalibData(String(characteristic))) {
       Serial.println("calibStarted = true");
       calibStarted = true;
     } else
@@ -246,9 +255,116 @@ void CalibrationPageState::display() {
 
 void CalibrationPageState::loopPageState() {
   if (calibStarted) {
-    calibState = getCalibData(String(characteristic));
+    calibState = getHumidityCalibData(String(characteristic));
   }
   display();
+}
+
+// Implementación de SelectOutputPageState
+SelectOutputPageState::SelectOutputPageState() { name = "Configurar salida"; }
+
+void SelectOutputPageState::handleInput(int input) {
+  if (input == BTN_UP) {
+    irrigationOutput++;
+    if (irrigationOutput >= 4)
+      irrigationOutput = 3;
+    display();
+  } else if (input == BTN_DOWN) {
+    irrigationOutput--;
+    if (irrigationOutput < 0)
+      irrigationOutput = 0;
+    display();
+  } else if (input == BTN_ENTER) {
+    currentPageState = &irrigationMenuState;
+  } else if (input == BTN_ESC) {
+    irrigationOutput = 0;
+    currentPageState = &irrigationMenuState;
+  }
+}
+
+void SelectOutputPageState::display() {
+  String description = "Seleccionar salida:";
+  displaySubMenuStr(name, description, String(irrigationOutput));
+}
+
+// Implementación de IrrigationCalibMenuState
+IrrigationCalibMenuState::IrrigationCalibMenuState(short *ptrMenuSelection,
+                                                   short *ptrSeconds)
+    : ptrMenuSelection(ptrMenuSelection), ptrActiveSeconds(ptrSeconds) {
+  menuSize = 3;
+  String options[] = {String(*ptrActiveSeconds) + "segundos", "Probar",
+                      "Guardar"};
+  for (int i = 0; i < menuSize; i++) {
+    menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
+  }
+}
+
+void IrrigationCalibMenuState::handleInput(int input) {
+  if (input == BTN_DOWN) {
+    menuIndex++;
+    if (menuIndex >= menuSize)
+      menuIndex = 0;
+  } else if (input == BTN_UP) {
+    menuIndex--;
+    if (menuIndex < 0)
+      menuIndex = menuSize - 1;
+  } else if (input == BTN_ENTER) {
+    switch (menuIndex) {
+    case 0:
+      // Navegar al menú de selección de salida
+      currentPageState = &selectOutputPageState;
+      break;
+    case 1:
+      // Navegar al submenú 2
+      // currentPageState = &subMenu2State;
+      break;
+    case 2:
+      // Navegar al submenú 3
+      // currentPageState = &subMenu3State;
+      break;
+    default:
+      break;
+    }
+  } else if (input == BTN_ESC) {
+    currentPageState = &irrigationMenuState;
+    menuIndex = 0;
+  }
+}
+
+void IrrigationCalibMenuState::display() {
+  displayMenu(getIrrigationCalibMenuStateTitle(ptrMenuSelection) +
+                  String(" - Sal.") + String(irrigationOutput),
+              menuOtionsStr, menuSize, menuIndex);
+}
+
+// Implementación de SelectOutputPageState
+SetTimePageState::SetTimePageState(short *ptrMenuSelection, short *ptrSeconds)
+    : ptrMenuSelection(ptrMenuSelection), ptrActiveSeconds(ptrSeconds) {
+  name = "Configurar tiempo";
+}
+
+void SetTimePageState::handleInput(int input) {
+  if (input == BTN_UP) {
+    irrigationOutput++;
+    if (irrigationOutput >= 4)
+      irrigationOutput = 3;
+    display();
+  } else if (input == BTN_DOWN) {
+    irrigationOutput--;
+    if (irrigationOutput < 0)
+      irrigationOutput = 0;
+    display();
+  } else if (input == BTN_ENTER) {
+    currentPageState = &irrigationMenuState;
+  } else if (input == BTN_ESC) {
+    irrigationOutput = 0;
+    currentPageState = &irrigationMenuState;
+  }
+}
+
+void SetTimePageState::display() {
+  String description = "Seleccionar salida:";
+  displaySubMenuStr(name, description, String(irrigationOutput));
 }
 
 // Métodos específicos
@@ -260,7 +376,7 @@ void checkHumidity() {
 
     displayMessage("Conectando con el", "sensor de humedad", "");
     delay(1000);
-    humidityValue = getBleData();
+    humidityValue = getBleHumidityData();
     displayHumidityData();
   }
 }
@@ -277,6 +393,23 @@ void displayHumidityData() {
   if (humidityValue > humidityThreshold) {
     displayMessage("Lectura de humedad", line1, line2);
   } else {
-    displayErrorMessage("La planta necesita agua!", line1, line2);
+    displayErrorMessage("Agua para la planta!", line1, line2);
+  }
+}
+
+String getIrrigationCalibMenuStateTitle(short *ptrMenuIndex) {
+  switch (*ptrMenuIndex) {
+  case 0:
+    return IRRIGATION_OFFSET_MENU_TITLE;
+    break;
+  case 1:
+    return IRRIGATION_CALIB_MENU_TITLE;
+    break;
+  case 2:
+    return IRRIGATION_RUN_MENU_TITLE;
+    break;
+  default:
+    return "";
+    break;
   }
 }

@@ -1,6 +1,6 @@
 /*
 //
-//  Módulo IoT: Test BLE client
+//  Módulo IoT: BLE client
 //
 */
 
@@ -18,9 +18,8 @@ static BLERemoteCharacteristic *pRemoteHumCalibCharacteristic;
 static BLERemoteCharacteristic *pRemoteDryCalibCharacteristic;
 
 static BLEAdvertisedDevice *myDevice;
-bool ledStatus = false;
 
-class MyClientCallback : public BLEClientCallbacks {
+class HumidityClientCallback : public BLEClientCallbacks {
   void onConnect(BLEClient *pclient) {}
   void onDisconnect(BLEClient *pclient) {
     connected = false;
@@ -28,12 +27,12 @@ class MyClientCallback : public BLEClientCallbacks {
   }
 };
 
-bool connectToServer() {
+bool connectToHumidityServer() {
   Serial.print("Forming a connection to ");
   Serial.println(myDevice->getAddress().toString().c_str());
 
   BLEClient *pClient = BLEDevice::createClient();
-  pClient->setClientCallbacks(new MyClientCallback());
+  pClient->setClientCallbacks(new HumidityClientCallback());
   Serial.println(" - Created client");
   // Connect to the remove BLE Server.
   pClient->connect(myDevice); // if you pass BLEAdvertisedDevice instead of
@@ -85,7 +84,7 @@ bool connectToServer() {
   return true;
 }
 
-class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
+class HumidityAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     Serial.print("BLE Advertised Device found: ");
     Serial.println(advertisedDevice.toString().c_str());
@@ -97,14 +96,15 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
       doScan = true;
     } // Found our server
   }   // onResult
-};    // MyAdvertisedDeviceCallbacks
+};    // HumidityAdvertisedDeviceCallbacks
 
-void setupBle() {
-  Serial.println("Starting BLE Client...");
+void setupBleHumidity() {
+  Serial.println("Starting BLE Humidity Client...");
   BLEDevice::init("");
 
   BLEScan *pBLEScan = BLEDevice::getScan();
-  pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
+  pBLEScan->setAdvertisedDeviceCallbacks(
+      new HumidityAdvertisedDeviceCallbacks());
   pBLEScan->setInterval(1349);
   pBLEScan->setWindow(449);
   pBLEScan->setActiveScan(true);
@@ -112,11 +112,11 @@ void setupBle() {
 } // End of setup.
 
 // This is the Arduino main loop function.
-int getBleData() {
-  Serial.println("getBleData()");
+int getBleHumidityData() {
+  Serial.println("getBleHumidityData()");
 
   if (doConnect == true) {
-    if (connectToServer()) {
+    if (connectToHumidityServer()) {
       Serial.println("We are now connected to the BLE Server.");
     } else {
       Serial.println("We have failed to connect to the server; there is nothin "
@@ -140,12 +140,12 @@ int getBleData() {
 }
 
 // Lee el estado de la calibración
-String getCalibData(String bleCalibCharacteristic) {
+String getHumidityCalibData(String bleCalibCharacteristic) {
   Serial.print("getCalibData: ");
   Serial.println(bleCalibCharacteristic.c_str());
 
   if (doConnect == true) {
-    if (connectToServer()) {
+    if (connectToHumidityServer()) {
       Serial.println("We are now connected to the BLE Server.");
     } else {
       Serial.println("We have failed to connect to the server.");
@@ -175,12 +175,12 @@ String getCalibData(String bleCalibCharacteristic) {
 }
 
 // Inicia la calibración de humedad o sequedad
-bool setCalibData(String bleCalibCharacteristic) {
+bool setHumidityCalibData(String bleCalibCharacteristic) {
   Serial.print("setCalibData: ");
   Serial.println(bleCalibCharacteristic.c_str());
 
   if (doConnect == true) {
-    if (connectToServer()) {
+    if (connectToHumidityServer()) {
       Serial.println("We are now connected to the BLE Server.");
     } else {
       Serial.println("We have failed to connect to the server.");

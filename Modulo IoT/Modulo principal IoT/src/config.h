@@ -80,4 +80,9 @@
 #define CALIB_OK "c_ok"
 #define CALIB_NOK "c_nok"
 
+// Títilos del menú de irrigación
+#define IRRIGATION_OFFSET_MENU_TITLE "Riego Offset"
+#define IRRIGATION_CALIB_MENU_TITLE "Calib. riego"
+#define IRRIGATION_RUN_MENU_TITLE "Probar riego"
+
 #endif
