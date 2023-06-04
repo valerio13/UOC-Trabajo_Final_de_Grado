@@ -14,6 +14,7 @@ class ThresholdPageState;
 class CalibrationPageState;
 class SelectOutputPageState;
 class IrrigationCalibMenuState;
+class SetTimePageState;
 
 // Declaración de la variable global externa
 extern PageState *currentPageState;
@@ -32,6 +33,11 @@ extern IrrigationCalibMenuState runIrrigationMenuState;
 
 extern int humidityThreshold;
 extern Preferences preferences;
+extern short offsetMenuOption;
+extern short calibMenuOption;
+extern short runMenuOption;
+
+extern SetTimePageState setTimePageState;
 
 // Clase abstracta que define el estado base
 class PageState {
@@ -39,6 +45,7 @@ public:
   virtual void handleInput(int input) = 0;
   virtual void display() = 0;
   virtual void loopPageState() {}
+  virtual void pageInitialState(short data) {}
 
 protected:
   String name;
@@ -115,13 +122,14 @@ public:
 // Implementación de un estado concreto
 class IrrigationCalibMenuState : public PageState {
 public:
-  IrrigationCalibMenuState(short *ptrMenuSelection, short *ptrSeconds);
+  IrrigationCalibMenuState(short *ptrMenuSelection);
   void handleInput(int input) override;
   void display() override;
+  void pageInitialState(short data);
 
 private:
-  short *ptrActiveSeconds;
   short *ptrMenuSelection;
+  short irrigationSubmenuIndex = 0;
 };
 
 // Implementación de SelectOutputPageState
@@ -130,5 +138,10 @@ public:
   SetTimePageState();
   void handleInput(int input);
   void display();
+  void pageInitialState(short data);
+
+private:
+  short tempTime = 0;
+  short irrigationSubmenuIndex = 0;
 };
 #endif

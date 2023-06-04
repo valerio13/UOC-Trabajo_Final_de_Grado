@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include <OledDisplay.h> //Included the file to drive the Oled display
 #include <PageState.h>   //Included the file to manage the menu
+#include <Preferences.h>
 #include <bleHumidity.h>
 #include <config.h>
 
@@ -28,19 +29,15 @@ CalibrationPageState calibrationDryPageState("Calib. max. sequedad",
                                              MAX_CALIB_DRYNESS_HUM_CHAR_UUID);
 SelectOutputPageState selectOutputPageState;
 
-short offsetSeconds = 0;
-short calibSeconds = 0;
-short runSeconds = 0;
-
 short offsetMenuOption = 0;
 short calibMenuOption = 1;
 short runMenuOption = 2;
 
-IrrigationCalibMenuState irrigationOffsetCalibMenuState(&offsetMenuOption,
-                                                        &offsetSeconds);
-IrrigationCalibMenuState irrigationCalibMenuState(&calibMenuOption,
-                                                  &calibSeconds);
-IrrigationCalibMenuState runIrrigationMenuState(&runMenuOption, &runSeconds);
+IrrigationCalibMenuState irrigationOffsetCalibMenuState(&offsetMenuOption);
+IrrigationCalibMenuState irrigationCalibMenuState(&calibMenuOption);
+IrrigationCalibMenuState runIrrigationMenuState(&runMenuOption);
+
+SetTimePageState setTimePageState;
 
 PageState *currentPageState = &mainPageState;
 
@@ -70,10 +67,6 @@ void setup() {
   pinMode(BTN_ESC, INPUT);               // Setup input for right button
 
   setupBleHumidity();
-
-  offsetSeconds = 0;
-  calibSeconds = 0;
-  runSeconds = 0;
 
   Serial.println("fin setup");
 }

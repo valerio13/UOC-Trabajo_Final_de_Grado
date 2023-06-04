@@ -85,4 +85,8 @@
 #define IRRIGATION_CALIB_MENU_TITLE "Calib. riego"
 #define IRRIGATION_RUN_MENU_TITLE "Probar riego"
 
+// Se memorizan los valores de calibración
+#define IRRIGATION_OFFSET_TIME_PREF "irrOffsetT"
+#define IRRIGATION_RUN_TIME_PREF "irrCalibT"
+
 #endif

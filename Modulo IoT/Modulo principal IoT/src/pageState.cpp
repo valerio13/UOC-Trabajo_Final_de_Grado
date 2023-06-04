@@ -4,22 +4,26 @@
 #include "config.h"
 #include "globals.h"
 #include <Arduino.h>
+#include <Preferences.h>
 
 // Declaración de la variable global externa
 extern PageState *currentPageState;
 
 void checkHumidity();
 void displayHumidityData();
-String getIrrigationCalibMenuStateTitle(short *ptrMenuIndex);
+String getIrrigationCalibMenuStateTitle(short irrigationSubmenuIndex);
+short getIrrigationCalibTime(short irrigationSubmenuIndex);
+void setBackIrrigationCalibMenuState(short irrigationSubmenuIndex);
+void saveIrrigationCalibTime(short irrigationSubmenuIndex);
 
 int tempThreshold;
 String calibState;
 bool calibStarted = false;
 int irrigationOutput = 0;
-short tempTime = 0;
+short activeIrrigationTime = 0;
 
 // Implementación de MainPageState
-MainPageState::MainPageState() { Serial.println("MainPageState"); }
+MainPageState::MainPageState() {}
 
 void MainPageState::handleInput(int input) {
   if (input == BTN_ENTER || input == BTN_ESC) {
@@ -155,14 +159,19 @@ void IrrigationMenuState::handleInput(int input) {
     case 1:
       // Navegar al menú calibrar offset
       currentPageState = &irrigationOffsetCalibMenuState;
+      currentPageState->pageInitialState(
+          getIrrigationCalibTime(offsetMenuOption));
       break;
     case 2:
       // Navegar al menú calibrar riego
       currentPageState = &irrigationCalibMenuState;
+      currentPageState->pageInitialState(
+          getIrrigationCalibTime(calibMenuOption));
       break;
     case 3:
       // Navegar al menú regar
       currentPageState = &runIrrigationMenuState;
+      currentPageState->pageInitialState(getIrrigationCalibTime(runMenuOption));
     default:
       break;
     }
@@ -288,11 +297,24 @@ void SelectOutputPageState::display() {
 }
 
 // Implementación de IrrigationCalibMenuState
-IrrigationCalibMenuState::IrrigationCalibMenuState(short *ptrMenuSelection,
-                                                   short *ptrSeconds)
-    : ptrMenuSelection(ptrMenuSelection), ptrActiveSeconds(ptrSeconds) {
+IrrigationCalibMenuState::IrrigationCalibMenuState(short *ptrMenuSelection)
+    : ptrMenuSelection(ptrMenuSelection) {
   menuSize = 3;
-  String options[] = {String(*ptrActiveSeconds) + "segundos", "Probar",
+  irrigationSubmenuIndex = *ptrMenuSelection;
+
+  String options[] = {String(activeIrrigationTime) + " segundos", "Probar",
+                      "Guardar"};
+  for (int i = 0; i < menuSize; i++) {
+    menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
+  }
+}
+
+void IrrigationCalibMenuState::pageInitialState(short data) {
+  Serial.print("IrrigationCalibMenuState::pageInitialState: ");
+  Serial.println(irrigationSubmenuIndex);
+  activeIrrigationTime = data;
+
+  String options[] = {String(activeIrrigationTime) + " segundos", "Probar",
                       "Guardar"};
   for (int i = 0; i < menuSize; i++) {
     menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
@@ -312,7 +334,8 @@ void IrrigationCalibMenuState::handleInput(int input) {
     switch (menuIndex) {
     case 0:
       // Navegar al menú de selección de salida
-      currentPageState = &selectOutputPageState;
+      currentPageState = &setTimePageState;
+      currentPageState->pageInitialState(irrigationSubmenuIndex);
       break;
     case 1:
       // Navegar al submenú 2
@@ -320,7 +343,7 @@ void IrrigationCalibMenuState::handleInput(int input) {
       break;
     case 2:
       // Navegar al submenú 3
-      // currentPageState = &subMenu3State;
+      saveIrrigationCalibTime(irrigationSubmenuIndex);
       break;
     default:
       break;
@@ -332,39 +355,43 @@ void IrrigationCalibMenuState::handleInput(int input) {
 }
 
 void IrrigationCalibMenuState::display() {
-  displayMenu(getIrrigationCalibMenuStateTitle(ptrMenuSelection) +
+  displayMenu(getIrrigationCalibMenuStateTitle(irrigationSubmenuIndex) +
                   String(" - Sal.") + String(irrigationOutput),
               menuOtionsStr, menuSize, menuIndex);
 }
 
 // Implementación de SelectOutputPageState
-SetTimePageState::SetTimePageState(short *ptrMenuSelection, short *ptrSeconds)
-    : ptrMenuSelection(ptrMenuSelection), ptrActiveSeconds(ptrSeconds) {
-  name = "Configurar tiempo";
+SetTimePageState::SetTimePageState() { name = "Configurar tiempo"; }
+
+void SetTimePageState::pageInitialState(short data) {
+  irrigationSubmenuIndex = data;
+  tempTime = activeIrrigationTime;
 }
 
 void SetTimePageState::handleInput(int input) {
   if (input == BTN_UP) {
-    irrigationOutput++;
-    if (irrigationOutput >= 4)
-      irrigationOutput = 3;
+    tempTime++;
+    if (tempTime >= 60)
+      tempTime = 60;
     display();
   } else if (input == BTN_DOWN) {
-    irrigationOutput--;
-    if (irrigationOutput < 0)
-      irrigationOutput = 0;
+    tempTime--;
+    if (tempTime < 0)
+      tempTime = 0;
     display();
   } else if (input == BTN_ENTER) {
-    currentPageState = &irrigationMenuState;
+    setBackIrrigationCalibMenuState(irrigationSubmenuIndex);
+    currentPageState->pageInitialState(tempTime);
   } else if (input == BTN_ESC) {
-    irrigationOutput = 0;
     currentPageState = &irrigationMenuState;
   }
 }
 
 void SetTimePageState::display() {
-  String description = "Seleccionar salida:";
-  displaySubMenuStr(name, description, String(irrigationOutput));
+  String description = "Seleccionar tiempo:";
+  displaySubMenuStr(getIrrigationCalibMenuStateTitle(irrigationSubmenuIndex) +
+                        String(" - Sal.") + String(irrigationOutput),
+                    description, String(tempTime) + String(" seg."));
 }
 
 // Métodos específicos
@@ -397,8 +424,8 @@ void displayHumidityData() {
   }
 }
 
-String getIrrigationCalibMenuStateTitle(short *ptrMenuIndex) {
-  switch (*ptrMenuIndex) {
+String getIrrigationCalibMenuStateTitle(short irrigationSubmenuIndex) {
+  switch (irrigationSubmenuIndex) {
   case 0:
     return IRRIGATION_OFFSET_MENU_TITLE;
     break;
@@ -412,4 +439,60 @@ String getIrrigationCalibMenuStateTitle(short *ptrMenuIndex) {
     return "";
     break;
   }
+}
+
+void setBackIrrigationCalibMenuState(short irrigationSubmenuIndex) {
+  switch (irrigationSubmenuIndex) {
+  case 0:
+    // Navegar al menú calibrar offset
+    currentPageState = &irrigationOffsetCalibMenuState;
+    break;
+  case 1:
+    // Navegar al menú calibrar riego
+    currentPageState = &irrigationCalibMenuState;
+    break;
+  case 2:
+    // Navegar al menú regar
+    currentPageState = &runIrrigationMenuState;
+    break;
+  }
+}
+
+short getIrrigationCalibTime(short irrigationSubmenuIndex) {
+  String key;
+
+  switch (irrigationSubmenuIndex) {
+  case 0:
+    key = String(IRRIGATION_OFFSET_TIME_PREF) + "-" + String(irrigationOutput);
+    return preferences.getShort(key.c_str(), 10);
+    break;
+  case 1:
+    key = String(IRRIGATION_RUN_TIME_PREF) + "-" + String(irrigationOutput);
+    return preferences.getShort(key.c_str(), 10);
+    break;
+  case 2:
+    return 5;
+    break;
+  default:
+    return 0;
+    break;
+  }
+}
+
+void saveIrrigationCalibTime(short irrigationSubmenuIndex) {
+  String key;
+
+  switch (irrigationSubmenuIndex) {
+  case 0:
+    key = String(IRRIGATION_OFFSET_TIME_PREF) + "-" + String(irrigationOutput);
+    preferences.putShort(key.c_str(), activeIrrigationTime);
+    break;
+  case 1:
+    key = String(IRRIGATION_RUN_TIME_PREF) + "-" + String(irrigationOutput);
+    preferences.putShort(key.c_str(), activeIrrigationTime);
+    break;
+  }
+
+  Serial.print("saveIrrigationCalibTime ");
+  Serial.println(key);
 }
