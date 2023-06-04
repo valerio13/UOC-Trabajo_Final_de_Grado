@@ -40,10 +40,10 @@ bool connectToHumidityServer() {
                               // device address (public or private)
   Serial.println(" - Connected to server");
   // Obtain a reference to the service we are after in the remote BLE server.
-  BLERemoteService *pRemoteService = pClient->getService(SERVICE_UUID);
+  BLERemoteService *pRemoteService = pClient->getService(HUM_SERVICE_UUID);
   if (pRemoteService == nullptr) {
     Serial.print("Failed to find our service UUID: ");
-    Serial.println(SERVICE_UUID);
+    Serial.println(HUM_SERVICE_UUID);
     pClient->disconnect();
     return false;
   }
@@ -88,7 +88,7 @@ class HumidityAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     Serial.print("BLE Advertised Device found: ");
     Serial.println(advertisedDevice.toString().c_str());
-    if (advertisedDevice.getName() == BLE_SERVER_NAME) {
+    if (advertisedDevice.getName() == BLE_HUM_SERVER_NAME) {
       Serial.println("conección inicial");
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);

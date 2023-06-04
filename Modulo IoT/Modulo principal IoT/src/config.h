@@ -1,35 +1,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-/* List of Supported Fonts
- *
-  Arial14,
-  Arial_bold_14,
-  Callibri11,
-  Callibri11_bold,
-  Callibri11_italic,
-  Callibri15,
-  Corsiva_12,
-  fixed_bold10x15,
-  font5x7,    //Do not use in LARGE_FONT, can use as default font
-  font8x8,
-  Iain5x7,    //Do not use in LARGE_FONT, can use as default font
-  lcd5x7,     //Do not use in LARGE_FONT, can use as default font
-  Stang5x7,   //Do not use in LARGE_FONT, can use as default font
-  System5x7,  //Do not use in LARGE_FONT, can use as default font
-  TimesNewRoman16,
-  TimesNewRoman16_bold,
-  TimesNewRoman16_italic,
-  utf8font10x16,
-  Verdana12,
-  Verdana12_bold,
-  Verdana12_italic,
-  X11fixed7x14,
-  X11fixed7x14B,
-  ZevvPeep8x16
- *
- */
-
 #define OLED_I2C_ADDRESS 0x3C // Defined OLED I2C Address
 #define OLED_SDA 21
 #define OLED_SCL 22
@@ -67,8 +38,8 @@
 #define fontX 12
 #define fontY 16
 
-#define BLE_SERVER_NAME "SISTEMA HUMEDAD"
-#define SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E" // UART service UUID
+#define BLE_HUM_SERVER_NAME "SISTEMA HUMEDAD"
+#define HUM_SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
 #define HUM_CHAR_UUID "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 #define MAX_CALIB_HUM_CHAR_UUID "292f129c-f94f-4c8b-91b3-3f3a17f2ba0d"
 #define MAX_CALIB_DRYNESS_HUM_CHAR_UUID "d5db8f5f-9f28-4786-ae66-8b1e332ab298"
@@ -88,5 +59,10 @@
 // Se memorizan los valores de calibración
 #define IRRIGATION_OFFSET_TIME_PREF "irrOffsetT"
 #define IRRIGATION_RUN_TIME_PREF "irrCalibT"
+
+// Comunicación BLE con el sistema de riego
+#define BLE_IRRI_DEVICE_NAME "SISTEMA RIEGO"
+#define IRRI_SERVICE_UUID "a50e3574-e50c-44e2-aaf2-d1ae1272b55a"
+#define START_WATERING_CHAR_UUID "2bebc6ee-61b7-40f3-a7cb-b2cbd2627e4b"
 
 #endif

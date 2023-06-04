@@ -4,11 +4,12 @@
 //////////////////////////////////////////////
 
 #include <Arduino.h>
-#include <OledDisplay.h> //Included the file to drive the Oled display
-#include <PageState.h>   //Included the file to manage the menu
+#include "OledDisplay.h" //Included the file to drive the Oled display
+#include "PageState.h"   //Included the file to manage the menu
 #include <Preferences.h>
-#include <bleHumidity.h>
-#include <config.h>
+#include "bleHumidity.h"
+#include "config.h"
+#include "bleIrrigation.h"
 
 #define DELAY 500 // Define the delay time used in the loop method
 #define PRESS_BUTTON_DELAY                                                     \
@@ -67,7 +68,8 @@ void setup() {
   pinMode(BTN_ESC, INPUT);               // Setup input for right button
 
   setupBleHumidity();
-
+  setupBleIrrigation();
+ 
   Serial.println("fin setup");
 }
 

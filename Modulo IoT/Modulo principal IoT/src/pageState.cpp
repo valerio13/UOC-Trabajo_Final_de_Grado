@@ -1,6 +1,7 @@
 #include "PageState.h"
 #include "OledDisplay.h"
 #include "bleHumidity.h"
+#include "bleIrrigation.h"
 #include "config.h"
 #include "globals.h"
 #include <Arduino.h>
@@ -339,7 +340,7 @@ void IrrigationCalibMenuState::handleInput(int input) {
       break;
     case 1:
       // Navegar al submenú 2
-      // currentPageState = &subMenu2State;
+      setIrrigationData(irrigationOutput, activeIrrigationTime);
       break;
     case 2:
       // Navegar al submenú 3
@@ -492,7 +493,4 @@ void saveIrrigationCalibTime(short irrigationSubmenuIndex) {
     preferences.putShort(key.c_str(), activeIrrigationTime);
     break;
   }
-
-  Serial.print("saveIrrigationCalibTime ");
-  Serial.println(key);
 }
