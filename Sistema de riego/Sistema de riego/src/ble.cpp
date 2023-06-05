@@ -30,9 +30,15 @@ void activateOutput(int output, int activationTime);
 // https://www.uuidgenerator.net/
 
 class MyServerCallbacks : public BLEServerCallbacks {
-  void onConnect(BLEServer *pServer) { deviceConnected = true; };
+  void onConnect(BLEServer *pServer) {
+    deviceConnected = true;
+    Serial.println("onConnect");
+  };
 
-  void onDisconnect(BLEServer *pServer) { deviceConnected = false; }
+  void onDisconnect(BLEServer *pServer) {
+    deviceConnected = false;
+    Serial.println("onDisconnect");
+  }
 };
 
 class StartWateringCallbacks : public BLECharacteristicCallbacks {
@@ -84,12 +90,13 @@ void bleLoop() {
   if (!deviceConnected && oldDeviceConnected) {
     delay(1000); // give the bluetooth stack the chance to get things ready
     pServer->startAdvertising(); // restart advertising
-    Serial.println("start advertising");
+    Serial.println("Device disconecting - start advertising");
     oldDeviceConnected = deviceConnected;
   }
   // connecting
   if (deviceConnected && !oldDeviceConnected) {
     // do stuff here on connecting
+    Serial.println("Device conected");
     oldDeviceConnected = deviceConnected;
   }
 
@@ -107,9 +114,7 @@ void processData(std::string data) {
     std::cout << "activationTime: " << activationTime << std::endl;
 
     activateOutput(output, activationTime);
-  }
-  else
-  {
+  } else {
     // No se encontraron dos enteros en rxValue
     std::cout << "Error: los datos recibidos no contiene dos enteros."
               << std::endl;
@@ -120,6 +125,9 @@ void activateOutput(int output, int activationTime) {
   int selectedOutput;
 
   switch (output) {
+  case 0:
+    selectedOutput = OUTPUT_0;
+    break;
   case 1:
     selectedOutput = OUTPUT_1;
     break;
@@ -128,9 +136,6 @@ void activateOutput(int output, int activationTime) {
     break;
   case 3:
     selectedOutput = OUTPUT_3;
-    break;
-  case 4:
-    selectedOutput = OUTPUT_4;
     break;
   }
   std::cout << "selectedOutput: " << selectedOutput << std::endl;

@@ -5,7 +5,7 @@
 
 #define START_WATERING_CHAR_UUID "2bebc6ee-61b7-40f3-a7cb-b2cbd2627e4b"
 
-#define OUTPUT_1 27
-#define OUTPUT_2 26
-#define OUTPUT_3 25
-#define OUTPUT_4 33
+#define OUTPUT_0 27
+#define OUTPUT_1 26
+#define OUTPUT_2 25
+#define OUTPUT_3 33
