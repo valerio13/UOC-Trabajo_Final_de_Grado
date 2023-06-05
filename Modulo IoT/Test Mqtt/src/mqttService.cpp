@@ -1,7 +1,7 @@
 #include "mqttService.h"
 #include "networkConfig.h"
 #include <PubSubClient.h>
-#include <WiFi.h>
+#include <WiFiClientSecure.h>
 
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -10,31 +10,30 @@ void setup_wifi();
 void callback(char *topic, byte *message, unsigned int length);
 void reconnect();
 
-void setupMqtt()
-{
-    setup_wifi();
-    client.setServer(MQTT_SERVER, 1883);
-    client.setCallback(callback);
+void setupMqtt() {
+  setup_wifi();
+  client.setServer(MQTT_SERVER, 1883);
+  client.setCallback(callback);
 }
 
 void loopMqtt() {
-    if (!client.connected()) {
-      reconnect();
-    }
-    client.loop();
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
 }
 
 void publishMqttData(short value) {
-    if (!client.connected()) {
-      reconnect();
-    }
+  if (!client.connected()) {
+    reconnect();
+  }
 
-    // Convert the value to a char array
-    char humString[8];
-    dtostrf(value, 1, 2, humString);
-    Serial.print("Humidity: ");
-    Serial.println(humString);
-    client.publish("moisture1", humString);
+  // Convert the value to a char array
+  char humString[8];
+  dtostrf(value, 1, 2, humString);
+  Serial.print("Humidity: ");
+  Serial.println(humString);
+  client.publish("moisture1", humString);
 }
 
 void setup_wifi() {
