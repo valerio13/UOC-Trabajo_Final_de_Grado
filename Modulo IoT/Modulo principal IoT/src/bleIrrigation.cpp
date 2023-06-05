@@ -59,12 +59,6 @@ bool connectToIrrigationServer() {
   }
 
   Serial.println(" - Found all characteristics");
-  // Read the value of the characteristic.
-  if (pRemoteIrrigationCharacteristic->canRead()) {
-    std::string value = pRemoteIrrigationCharacteristic->readValue();
-    Serial.print("The characteristic value was: ");
-    Serial.println(value.c_str());
-  }
   connected = true;
   return true;
 }
@@ -75,7 +69,7 @@ class IrrigationAdvertisedDeviceCallbacks
     Serial.print("BLE Advertised Device found: ");
     Serial.println(advertisedDevice.toString().c_str());
     if (advertisedDevice.getName() == BLE_IRRI_DEVICE_NAME) {
-      Serial.println("conección inicial");
+      Serial.println("Device encontrado");
       BLEDevice::getScan()->stop();
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
@@ -97,9 +91,9 @@ void setupBleIrrigation() {
   pBLEScan->start(5, false);
 } // End of setup.
 
-// Inicia la calibración de humedad o sequedad
+// Activación salida
 bool setIrrigationData(int output, int time) {
-  Serial.print("setIrriData");
+  Serial.println("setIrriData");
 
   if (doConnect == true) {
     if (connectToIrrigationServer()) {
@@ -113,17 +107,18 @@ bool setIrrigationData(int output, int time) {
   bool value = false;
 
   if (connected) {
-    if (pRemoteIrrigationCharacteristic->canRead()) {
-      std::string result = std::to_string(output) + " " + std::to_string(time);
+    Serial.println("Connected");
+    std::string result = std::to_string(output) + " " + std::to_string(time);
 
-      pRemoteIrrigationCharacteristic->writeValue(result);
-      value = true;
-      Serial.print("->writeValue()");
-      Serial.print(result.c_str());
-    }
+    pRemoteIrrigationCharacteristic->writeValue(result);
+    value = true;
+    Serial.print("->writeValue()");
+    Serial.println(result.c_str());
   } else if (doScan) {
+    Serial.println("Not connected");
     BLEDevice::getScan()->start(0);
   }
 
+  Serial.println("End setIrriData");
   return value;
 }

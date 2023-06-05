@@ -3,13 +3,13 @@
 ///   Projecte d'interacció tangible
 //////////////////////////////////////////////
 
-#include <Arduino.h>
 #include "OledDisplay.h" //Included the file to drive the Oled display
 #include "PageState.h"   //Included the file to manage the menu
-#include <Preferences.h>
 #include "bleHumidity.h"
-#include "config.h"
 #include "bleIrrigation.h"
+#include "config.h"
+#include <Arduino.h>
+#include <Preferences.h>
 
 #define DELAY 500 // Define the delay time used in the loop method
 #define PRESS_BUTTON_DELAY                                                     \
@@ -69,7 +69,7 @@ void setup() {
 
   setupBleHumidity();
   setupBleIrrigation();
- 
+
   Serial.println("fin setup");
 }
 
