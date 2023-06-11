@@ -1,7 +1,5 @@
 /*
-//
 //  Módulo IoT: BLE client
-//
 */
 
 #include "config.h"

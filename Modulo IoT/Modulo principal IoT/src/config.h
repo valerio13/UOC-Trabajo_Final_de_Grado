@@ -5,18 +5,6 @@
 #define OLED_SDA 21
 #define OLED_SCL 22
 
-#define MAX_DEPTH 2
-
-#define SCREEN_WIDTH 128 // reemplaza ocurrencia de SCREEN_WIDTH por 128
-#define SCREEN_HEIGHT 64 // reemplaza ocurrencia de SCREEN_HEIGHT por 64
-
-/*
- * Define your font from the list.
- * Default font: lcd5x7
- * Comment out the following for using the default font.
- */
-#define LARGE_FONT Verdana12
-
 // Navigate buttons
 #define BTN_UP 16    // Up Button
 #define BTN_DOWN 17  // Down Button
@@ -25,18 +13,8 @@
 #define BTN_NONE -1  // Ningún botón pulsado
 
 #define READ_HUM_DELAY 30000
-// Comment the following to disable internal pullup for Navigate buttons
-// #define NAV_BUTTONS_INPUT_PULLUP
 
 #define TOTAL_NAV_BUTTONS 4 // Total Navigation Button used
-
-/*Demonstrate PWM with LED on D11*/
-#define LED_PIN 11 // Defined LED Pin to D11
-
-#define MAX_DEPTH 2
-
-#define fontX 12
-#define fontY 16
 
 #define BLE_HUM_SERVER_NAME "SISTEMA HUMEDAD"
 #define HUM_SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
@@ -45,6 +23,8 @@
 #define MAX_CALIB_DRYNESS_HUM_CHAR_UUID "d5db8f5f-9f28-4786-ae66-8b1e332ab298"
 
 #define HUMIDITY_THRESHOLD_STR "humThresh"
+
+#define CHECK_HUMIDITY_ENABLED "humCheckEnabled"
 
 #define START_CALIB "c_s"
 #define CALIB_ON "c_on"

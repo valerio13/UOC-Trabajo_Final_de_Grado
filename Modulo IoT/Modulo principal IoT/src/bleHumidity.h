@@ -7,4 +7,7 @@ void setupBleHumidity();
 int getBleHumidityData();
 String getHumidityCalibData(String bleCalibCharacteristic);
 bool setHumidityCalibData(String bleCalibCharacteristic);
+bool connectToHumidityServer();
+void disconnectFromHumidityServer();
+
 #endif

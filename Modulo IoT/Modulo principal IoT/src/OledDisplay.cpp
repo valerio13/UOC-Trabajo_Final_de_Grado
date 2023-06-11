@@ -1,15 +1,10 @@
 //////////////////////////////////////////////
 ///   Author: Valerio Colantonio
-///   Projecte d'interacció tangible
 //////////////////////////////////////////////
 
 #include "config.h"
 #include <Adafruit_GFX.h> //Library for graphic displays.
 #include <Adafruit_SH1106.h>
-// #include <Wire.h> //I2C bus library.
-
-#define ANCHO 128 // Declare the width resolution.
-#define ALTO 64   // Declare the heigh resolution.
 
 Adafruit_SH1106 oled(OLED_SDA, OLED_SCL);
 
@@ -20,7 +15,7 @@ static uint16_t firstLineYoffset = 16; // First line Y offset.
 // Method that setup the display at Arduino start.
 void setupDisplay() {
   Wire.begin(); // Initialize I2C bus
-  oled.begin(SH1106_SWITCHCAPVCC, 0x3C);
+  oled.begin(SH1106_SWITCHCAPVCC, OLED_I2C_ADDRESS);
   oled.clearDisplay();
 }
 
@@ -76,12 +71,12 @@ void displayErrorMessage(String line1, String line2, String line3) {
   oled.print(
       line1); // Set the text that will be displayed on the given screen line.
 
-  oled.setCursor(initialXPos, 8); // Locate cursor at given coordinates.
-  oled.setTextSize(1);            // Set text size to 1.
+  oled.setCursor(initialXPos, 16); // Locate cursor at given coordinates.
+  oled.setTextSize(1);             // Set text size to 1.
   oled.print(
       line2); // Set the text that will be displayed on the given screen line.
 
-  oled.setCursor(initialXPos, 24); // Locate cursor at given coordinates.
+  oled.setCursor(initialXPos, 32); // Locate cursor at given coordinates.
   oled.setTextSize(1);             // Set text size to 2.
   oled.print(
       line3); // Set the text that will be displayed on the given screen line.
@@ -132,36 +127,24 @@ void displayMenu(String title, String *pdata, byte length,
   oled.setTextSize(1);      // Set text size to 2.
   oled.print(title);        // Set the text of the menu title.
 
-  // oled.fillRect(0, 55, oled.width(), 12,
-  //               WHITE);     // Draw a white filled rectangle in the bottom
-  //               side.
-  //                           // Here will be displayed the button function
-  //                           text.
-  // oled.setTextColor(BLACK); // Set the text color to black.
-
-  // oled.setCursor(5, 56); // Locate cursor at given coordinates.
-  // oled.setTextSize(1);   // Set text size to 1.
-  // oled.print("SELEC.");  // Set the text for the left button function.
-
-  // oled.setCursor(70, 56);  // Locate cursor at given coordinates.
-  // oled.setTextSize(1);     // Set text size to 1.
-  // oled.print("SIGUIENTE"); // Set the text for the right button function.
-
   oled.display(); // Displays everything previously set on the screen.
 }
 
 // Method that displays the submenu page.
-void displaySubMenuStr(String subMenuTitle, String description, String value) {
+void displaySubMenuStr(String subMenuTitle, String description, String value,
+                       String leftOption, String rightOtion) {
   oled.clearDisplay(); // limpia pantalla
 
-  oled.setTextColor(WHITE); // Set the text color to white.
-  oled.setCursor(0, 0);     // Locate cursor at given coordinates.
+  oled.fillRect(0, 0, oled.width(), 12, WHITE);
+  oled.setTextColor(BLACK); // Set the text color.
+  oled.setCursor(2, 2);     // Locate cursor at given coordinates.
   oled.setTextSize(1);      // Set text size to 2.
   oled.print(subMenuTitle); // Set the page title.
 
-  oled.setCursor(2, 16);   // Locate cursor at given coordinates.
-  oled.setTextSize(1);     // Set text size to 2.
-  oled.print(description); // Set the page description.
+  oled.setTextColor(WHITE); // Set the text color.
+  oled.setCursor(2, 16);    // Locate cursor at given coordinates.
+  oled.setTextSize(1);      // Set text size to 2.
+  oled.print(description);  // Set the page description.
 
   oled.setCursor(2, 32); // Locate cursor at given coordinates.
   oled.setTextSize(1);   // Set text size to 2.
@@ -169,15 +152,19 @@ void displaySubMenuStr(String subMenuTitle, String description, String value) {
 
   oled.setTextColor(BLACK); // Set the text color to black.
   oled.fillRect(0, 55, oled.width(), 12,
-                WHITE);  // Draw a white filled rectangle in the bottom side.
-                         // Here will be displayed the button function text.
-  oled.setCursor(5, 56); // Locate cursor at given coordinates.
-  oled.setTextSize(1);   // Set text size to 1.
-  oled.print("GUARDAR"); // Set the text for the left button function.
+                WHITE);   // Draw a white filled rectangle in the bottom side.
+                          // Here will be displayed the button function text.
+  oled.setCursor(5, 56);  // Locate cursor at given coordinates.
+  oled.setTextSize(1);    // Set text size to 1.
+  oled.print(leftOption); // Set the text for the left button function.
 
   oled.setCursor(90, 56); // Locate cursor at given coordinates.
   oled.setTextSize(1);    // Set text size to 1.
-  oled.print("SALIR");    // Set the text for the right button function.
+  oled.print(rightOtion); // Set the text for the right button function.
 
   oled.display(); // Displays everything previously set on the screen.
+}
+
+void displaySubMenuStr(String subMenuTitle, String description, String value) {
+  displaySubMenuStr(subMenuTitle, description, value, "GUARDAR", "SALIR");
 }

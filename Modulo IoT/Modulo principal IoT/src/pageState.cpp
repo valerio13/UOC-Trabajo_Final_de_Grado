@@ -10,6 +10,9 @@
 // Declaración de la variable global externa
 extern PageState *currentPageState;
 
+extern bool humidityCheckEnabled;
+extern int humidityValue;
+
 void checkHumidity();
 void displayHumidityData();
 String getIrrigationCalibMenuStateTitle(short irrigationSubmenuIndex);
@@ -22,6 +25,7 @@ String calibState;
 bool calibStarted = false;
 int irrigationOutput = 0;
 short activeIrrigationTime = 0;
+RunState runState = IDLE;
 
 // Implementación de MainPageState
 MainPageState::MainPageState() {}
@@ -40,8 +44,9 @@ void MainPageState::loopPageState() { checkHumidity(); }
 MainMenuState::MainMenuState() {
   name = "MENU PRINCIPAL";
   Serial.println(name);
-  menuSize = 3;
-  String options[] = {"Modulo humedad", "Modulo riego", "Servicio IoT"};
+  menuSize = 4;
+  String options[] = {"Modulo humedad", "Modulo riego", "Servicio IoT",
+                      "Habilitar"};
   for (int i = 0; i < menuSize; i++) {
     menuOtionsStr[i] = options[i]; // Asigna los valores a la matriz
   }
@@ -68,6 +73,9 @@ void MainMenuState::handleInput(int input) {
     case 2:
       // Navegar al submenú 3
       // currentPageState = &subMenuState;
+      break;
+    case 3:
+      currentPageState = &enableHumidityCheckPageState;
       break;
     }
   } else if (input == BTN_ESC) {
@@ -111,12 +119,10 @@ void MoistureMenuState::handleInput(int input) {
       break;
     case 1:
       // Navegar a la página de Calibrar sequedad
-      Serial.println("Selecctionado: calibrationHumPageState");
       currentPageState = &calibrationHumPageState;
       break;
     case 2:
       // Navegar a la página de Calibrar humedad max
-      Serial.println("Selecctionado: calibrationDryPageState");
       currentPageState = &calibrationDryPageState;
     default:
       break;
@@ -211,6 +217,9 @@ void ThresholdPageState::handleInput(int input) {
     preferences.putInt(HUMIDITY_THRESHOLD_STR, tempThreshold);
     humidityThreshold =
         preferences.getInt(HUMIDITY_THRESHOLD_STR, tempThreshold);
+    displayMessage(name, "Guardado", "");
+    delay(3000);
+    display();
   } else if (input == BTN_ESC) {
     currentPageState = &moistureMenuState;
     thrHandleInputFirstTime = true;
@@ -234,21 +243,23 @@ CalibrationPageState::CalibrationPageState(const char *pagName,
 void CalibrationPageState::handleInput(int input) {
   if (input == BTN_ENTER && calibStarted == false) {
     if (setHumidityCalibData(String(characteristic))) {
-      Serial.println("calibStarted = true");
       calibStarted = true;
-    } else
+      Serial.println("calibStarted = true");
+      displaySubMenuStr(name, "Iniciada!", "", "", "SALIR");
+    } else {
       calibStarted = false;
-    Serial.println("calibStarted = false");
+      Serial.println("calibStarted = false");
+    }
   } else if (input == BTN_ESC) {
-    currentPageState = &moistureMenuState;
     calibStarted = false;
+    currentPageState = &moistureMenuState;
   }
 }
 
 void CalibrationPageState::display() {
   String description;
   if (!calibStarted) {
-    description = "Iniciar...";
+    description = "Iniciar!";
   }
   if (calibState == START_CALIB) {
     description = "Iniciando...";
@@ -260,7 +271,7 @@ void CalibrationPageState::display() {
     description = "Error";
   }
 
-  displaySubMenuStr(name, description, "");
+  displaySubMenuStr(name, description, "", "EMPEZAR", "SALIR");
 }
 
 void CalibrationPageState::loopPageState() {
@@ -361,7 +372,7 @@ void IrrigationCalibMenuState::display() {
               menuOtionsStr, menuSize, menuIndex);
 }
 
-// Implementación de SelectOutputPageState
+// Implementación de SetTimePageState
 SetTimePageState::SetTimePageState() { name = "Configurar tiempo"; }
 
 void SetTimePageState::pageInitialState(short data) {
@@ -398,14 +409,27 @@ void SetTimePageState::display() {
 // Métodos específicos
 void checkHumidity() {
   static long lastTime = 0;
+
   long now = millis();
   if (abs(now - lastTime) > READ_HUM_DELAY) {
     lastTime = now; // Stores the last time that this "if" was executed.
 
-    displayMessage("Conectando con el", "sensor de humedad", "");
-    delay(1000);
-    humidityValue = getBleHumidityData();
-    displayHumidityData();
+    if (!humidityCheckEnabled) {
+      displayMessage("Control de humedad ", "DESHABILITADO", "");
+    } else {
+      displayMessage("Conectando con el", "sensor de humedad", "");
+
+      delay(1000);
+      bool connected = connectToHumidityServer();
+      if (connected) {
+        humidityValue = getBleHumidityData();
+        disconnectFromHumidityServer();
+        displayHumidityData();
+      } else {
+        displayErrorMessage("Error de conexión", "con el sensor de humedad",
+                            "");
+      }
+    }
   }
 }
 
@@ -422,6 +446,12 @@ void displayHumidityData() {
     displayMessage("Lectura de humedad", line1, line2);
   } else {
     displayErrorMessage("Agua para la planta!", line1, line2);
+    short irrigationTime = getIrrigationCalibTime(offsetMenuOption);
+    irrigationTime += getIrrigationCalibTime(calibMenuOption);
+    Serial.print("irrigationTime: ");
+    Serial.println(irrigationTime);
+
+    // setIrrigationData(irrigationOutput, activeIrrigationTime);
   }
 }
 
@@ -493,4 +523,37 @@ void saveIrrigationCalibTime(short irrigationSubmenuIndex) {
     preferences.putShort(key.c_str(), activeIrrigationTime);
     break;
   }
+
+  displayMessage("", "Guardado", "");
+  delay(3000);
+}
+
+// Implementación de SelectOutputPageState
+EnableHumidityCheckPageState::EnableHumidityCheckPageState() {
+  name = "Control humedad";
+}
+
+void EnableHumidityCheckPageState::handleInput(int input) {
+  if (input == BTN_UP || input == BTN_DOWN) {
+    humidityCheckEnabled = !humidityCheckEnabled;
+    display();
+  } else if (input == BTN_ENTER) {
+    preferences.putBool(CHECK_HUMIDITY_ENABLED, humidityCheckEnabled);
+    displayMessage(name, "Guardado", "");
+    delay(3000);
+    display();
+  } else if (input == BTN_ESC) {
+    humidityCheckEnabled = preferences.getBool(CHECK_HUMIDITY_ENABLED, false);
+    currentPageState = &mainMenuState;
+  }
+}
+
+void EnableHumidityCheckPageState::display() {
+  String description;
+  if (humidityCheckEnabled)
+    description = "HABILITADO";
+  else
+    description = "DESHABILITADO";
+
+  displaySubMenuStr(name, description, "");
 }

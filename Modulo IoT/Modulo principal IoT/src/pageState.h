@@ -15,6 +15,7 @@ class CalibrationPageState;
 class SelectOutputPageState;
 class IrrigationCalibMenuState;
 class SetTimePageState;
+class EnableHumidityCheckPageState;
 
 // Declaración de la variable global externa
 extern PageState *currentPageState;
@@ -26,6 +27,8 @@ extern ThresholdPageState thresholdPageState;
 extern CalibrationPageState calibrationHumPageState;
 extern CalibrationPageState calibrationDryPageState;
 extern SelectOutputPageState selectOutputPageState;
+extern EnableHumidityCheckPageState enableHumidityCheckPageState;
+extern EnableHumidityCheckPageState enableHumidityCheckPageState;
 
 extern IrrigationCalibMenuState irrigationOffsetCalibMenuState;
 extern IrrigationCalibMenuState irrigationCalibMenuState;
@@ -69,7 +72,6 @@ public:
   MainMenuState();
   void handleInput(int input) override;
   void display() override;
-  // void loopPageState() override;
 };
 
 // Implementación de un estado concreto
@@ -78,7 +80,6 @@ public:
   MoistureMenuState();
   void handleInput(int input) override;
   void display() override;
-  // void loopPageState() override;
 };
 
 // Implementación de un estado concreto
@@ -143,5 +144,13 @@ public:
 private:
   short tempTime = 0;
   short irrigationSubmenuIndex = 0;
+};
+
+// Implementación de SelectOutputPageState
+class EnableHumidityCheckPageState : public PageState {
+public:
+  EnableHumidityCheckPageState();
+  void handleInput(int input);
+  void display();
 };
 #endif

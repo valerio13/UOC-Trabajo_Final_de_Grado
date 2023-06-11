@@ -29,6 +29,7 @@ CalibrationPageState calibrationHumPageState("Calib. max. humedad",
 CalibrationPageState calibrationDryPageState("Calib. max. sequedad",
                                              MAX_CALIB_DRYNESS_HUM_CHAR_UUID);
 SelectOutputPageState selectOutputPageState;
+EnableHumidityCheckPageState enableHumidityCheckPageState;
 
 short offsetMenuOption = 0;
 short calibMenuOption = 1;
@@ -48,6 +49,7 @@ extern PageState *currentPageState;
 Preferences preferences;
 int humidityThreshold = 50;
 int humidityValue = 0;
+bool humidityCheckEnabled;
 
 // The Setup method
 void setup() {
@@ -56,6 +58,8 @@ void setup() {
 
   preferences.begin("my-app", false); // inicializar preferences
   humidityThreshold = preferences.getInt(HUMIDITY_THRESHOLD_STR, 50);
+  humidityCheckEnabled = preferences.getBool(CHECK_HUMIDITY_ENABLED, false);
+
   Serial.print("humidityThreshold:");
   Serial.println(humidityThreshold);
 

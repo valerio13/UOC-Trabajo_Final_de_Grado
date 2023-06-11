@@ -1,13 +1,11 @@
 /*
-//
 //  Módulo IoT: BLE client
-//
 */
 
+#include "config.h"
 #include "mqttService.h"
 #include <Arduino.h>
 #include <BLEDevice.h>
-#include "config.h"
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -136,6 +134,7 @@ int getBleHumidityData() {
       publishMqttData(value);
     }
   } else if (doScan) {
+    Serial.println("Humidity: Not connected");
     BLEDevice::getScan()->start(0);
   }
   return value;
@@ -143,7 +142,7 @@ int getBleHumidityData() {
 
 // Lee el estado de la calibración
 String getHumidityCalibData(String bleCalibCharacteristic) {
-  Serial.print("getCalibData: ");
+  Serial.print("getHumidityCalibData: ");
   Serial.println(bleCalibCharacteristic.c_str());
 
   if (doConnect == true) {
@@ -178,7 +177,7 @@ String getHumidityCalibData(String bleCalibCharacteristic) {
 
 // Inicia la calibración de humedad o sequedad
 bool setHumidityCalibData(String bleCalibCharacteristic) {
-  Serial.print("setCalibData: ");
+  Serial.print("setHumidityCalibData: ");
   Serial.println(bleCalibCharacteristic.c_str());
 
   if (doConnect == true) {
@@ -193,6 +192,7 @@ bool setHumidityCalibData(String bleCalibCharacteristic) {
   bool value = false;
 
   if (connected) {
+    Serial.println("setHumidityCalibData: connected");
     if (bleCalibCharacteristic == MAX_CALIB_HUM_CHAR_UUID) {
       if (pRemoteHumCalibCharacteristic->canRead()) {
         pRemoteHumCalibCharacteristic->writeValue(START_CALIB);
@@ -207,6 +207,7 @@ bool setHumidityCalibData(String bleCalibCharacteristic) {
       }
     }
   } else if (doScan) {
+    Serial.println("BLEDevice::getScan()->start(0)");
     BLEDevice::getScan()->start(0);
   }
 

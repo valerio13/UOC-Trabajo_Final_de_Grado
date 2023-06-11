@@ -3,9 +3,14 @@
 
 #include <Preferences.h>
 
-// Declaración de las variables globales
-extern Preferences preferences;
-extern int humidityThreshold;
-extern int humidityValue;
+enum RunState {
+  IDLE,
+  HUM_CONNECTING,
+  HUM_READING,
+  HUM_END_READING,
+  IRRIG_CONNECTING,
+  IRRIG_WRITING,
+  IRRIG_END_WRITING
+};
 
 #endif

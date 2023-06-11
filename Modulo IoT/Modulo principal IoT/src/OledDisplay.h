@@ -28,4 +28,6 @@ void displayMenu(String title, String *pdata, byte length,
 
 void displaySubMenuStr(String subMenuTitle, String description, String value);
 
+void displaySubMenuStr(String subMenuTitle, String description, String value,
+                       String leftOption, String rightOtion);
 #endif // End of define instruction.
