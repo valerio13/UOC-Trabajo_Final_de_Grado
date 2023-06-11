@@ -3,16 +3,14 @@
 ///   Projecte d'interacció tangible
 //////////////////////////////////////////////
 
+#include "config.h"
 #include <Adafruit_GFX.h> //Library for graphic displays.
-#include <Wire.h>         //I2C bus library.
-
 #include <Adafruit_SH1106.h>
-#include <config.h>
+// #include <Wire.h> //I2C bus library.
 
 #define ANCHO 128 // Declare the width resolution.
 #define ALTO 64   // Declare the heigh resolution.
 
-#define OLED_RESET 4 // Needed by the Adafruit_SSD1306 library but not used.
 Adafruit_SH1106 oled(OLED_SDA, OLED_SCL);
 
 static uint16_t initialXPos = 0;       // Initial x position.

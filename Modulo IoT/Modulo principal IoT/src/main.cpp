@@ -1,6 +1,5 @@
 //////////////////////////////////////////////
 ///   Author: Valerio Colantonio
-///   Projecte d'interacció tangible
 //////////////////////////////////////////////
 
 #include "OledDisplay.h" //Included the file to drive the Oled display
@@ -8,6 +7,7 @@
 #include "bleHumidity.h"
 #include "bleIrrigation.h"
 #include "config.h"
+#include "mqttService.h"
 #include <Arduino.h>
 #include <Preferences.h>
 
@@ -69,6 +69,7 @@ void setup() {
 
   setupBleHumidity();
   setupBleIrrigation();
+  setupMqtt();
 
   Serial.println("fin setup");
 }
@@ -84,6 +85,8 @@ void loop() {
     lastTime = now; // Stores the last time that this "if" was executed.
     currentPageState->loopPageState();
   }
+
+  loopMqtt();
 }
 
 // Method that monitoring the buttons and desides what to do in base of the

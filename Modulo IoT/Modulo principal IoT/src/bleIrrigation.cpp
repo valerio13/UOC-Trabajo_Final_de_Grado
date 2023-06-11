@@ -4,10 +4,10 @@
 //
 */
 
+#include "config.h"
 #include <Arduino.h>
 #include <BLEDevice.h>
 #include <Wire.h>
-#include <config.h>
 
 static boolean doConnect = false;
 static boolean connected = false;

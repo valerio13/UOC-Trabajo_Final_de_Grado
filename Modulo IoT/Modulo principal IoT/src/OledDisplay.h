@@ -1,6 +1,5 @@
 //////////////////////////////////////////////
 ///   Author: Valerio Colantonio
-///   Projecte d'interacció tangible
 //////////////////////////////////////////////
 
 // This file defines the methods and variables that are developed in the
@@ -10,7 +9,6 @@
                        // is not defined.
 #define OLEDDISPLAY_H_ // It is defined just once.
 
-#include "Menu.h" //Include the Menu files to use the MenuOptions.
 #include <Arduino.h>
 
 void setupDisplay(); // Method that setup the display at Arduino start.

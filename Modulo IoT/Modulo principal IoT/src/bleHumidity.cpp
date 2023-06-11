@@ -4,10 +4,10 @@
 //
 */
 
+#include "mqttService.h"
 #include <Arduino.h>
 #include <BLEDevice.h>
-#include <Wire.h>
-#include <config.h>
+#include "config.h"
 
 static boolean doConnect = false;
 static boolean connected = false;
@@ -132,6 +132,8 @@ int getBleHumidityData() {
       value = pRemoteHumCharacteristic->readUInt16();
       Serial.print("Humedad: ");
       Serial.println(value);
+
+      publishMqttData(value);
     }
   } else if (doScan) {
     BLEDevice::getScan()->start(0);
