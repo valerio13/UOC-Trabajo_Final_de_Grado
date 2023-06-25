@@ -1,3 +1,9 @@
+//
+//  Autor: Valerio Colantonio
+//  Módulo de riego: BLE server
+//  Gestión de la comunicación BLE con el módulo IoT
+//
+
 #include <Arduino.h>
 #include <BLE2902.h>
 #include <BLEDevice.h>
@@ -17,18 +23,15 @@ BLECharacteristic *pCalibDrynessCharacteristic;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 
-// Timer variables
+// Variables del temporizador
 unsigned long lastTime = 0;
 unsigned long timerDelay = 3000;
 
-// extern AppState currentAppState;
-
+// Declaración de las funciones que serán implementadas abajo
 void processData(std::string data);
 void activateOutput(int output, int activationTime);
 
-// See the following for generating UUIDs:
-// https://www.uuidgenerator.net/
-
+// Callback que se ejecuta cuando un cliente se conecta
 class MyServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer *pServer) {
     deviceConnected = true;
@@ -41,6 +44,7 @@ class MyServerCallbacks : public BLEServerCallbacks {
   }
 };
 
+// Callback que se ejecuta cuando se recibe un dato de riego
 class StartWateringCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pCharacteristic) {
     std::string rxValue = pCharacteristic->getValue();
@@ -54,17 +58,18 @@ class StartWateringCallbacks : public BLECharacteristicCallbacks {
   }
 };
 
+// Función de setup
 void bleSetup() {
   Serial.begin(921600);
 
-  // Create the BLE Device
+  // Crea el dispositivo BLE
   BLEDevice::init(BLE_DEVICE_NAME);
 
-  // Create the BLE Server
+  // Crea el servidor BLE
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new MyServerCallbacks());
 
-  // Create the BLE Service
+  // Crea el Servicio
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
   // Característica calibrar máxima humedad
@@ -73,29 +78,28 @@ void bleSetup() {
   pCalibHumudityCharacteristic->addDescriptor(new BLE2902());
   pCalibHumudityCharacteristic->setCallbacks(new StartWateringCallbacks());
 
-  // Start the service
+  // Start del servicio
   pService->start();
 
-  // Start advertising
   pServer->getAdvertising()->start();
   Serial.println("Waiting a client connection to notify...");
 }
 
+// Función de loop
 void bleLoop() {
   if ((millis() - lastTime) < timerDelay) {
     return;
   }
 
-  // disconnecting
+  // Desconexión
   if (!deviceConnected && oldDeviceConnected) {
-    delay(1000); // give the bluetooth stack the chance to get things ready
-    pServer->startAdvertising(); // restart advertising
+    delay(1000);
+    pServer->startAdvertising();
     Serial.println("Device disconecting - start advertising");
     oldDeviceConnected = deviceConnected;
   }
-  // connecting
+  // Conexión
   if (deviceConnected && !oldDeviceConnected) {
-    // do stuff here on connecting
     Serial.println("Device conected");
     oldDeviceConnected = deviceConnected;
   }
@@ -103,6 +107,8 @@ void bleLoop() {
   lastTime = millis();
 }
 
+// Función que procesa los datos recibidos: número de output que activar y
+// tiempo de activación
 void processData(std::string data) {
   std::stringstream ss(data);
   int output, activationTime;
@@ -121,6 +127,7 @@ void processData(std::string data) {
   }
 }
 
+// Función de activación de los outputs
 void activateOutput(int output, int activationTime) {
   int selectedOutput;
 

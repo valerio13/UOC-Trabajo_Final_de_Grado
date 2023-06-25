@@ -1,21 +1,26 @@
+// File de los datos de configuración del módulo
+
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define OLED_I2C_ADDRESS 0x3C // Defined OLED I2C Address
+// Setup de la pantalla
+#define OLED_I2C_ADDRESS 0x3C
 #define OLED_SDA 21
 #define OLED_SCL 22
 
-// Navigate buttons
+// Setup de los botones de navegación
 #define BTN_UP 16    // Up Button
 #define BTN_DOWN 17  // Down Button
 #define BTN_ENTER 18 // Down Button
 #define BTN_ESC 19   // Down Button
 #define BTN_NONE -1  // Ningún botón pulsado
 
+#define TOTAL_NAV_BUTTONS 4
+
+// Delay en la lectura de la humedad
 #define READ_HUM_DELAY 30000
 
-#define TOTAL_NAV_BUTTONS 4 // Total Navigation Button used
-
+// Setup del sistema de humedad
 #define BLE_HUM_SERVER_NAME "SISTEMA HUMEDAD"
 #define HUM_SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
 #define HUM_CHAR_UUID "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"

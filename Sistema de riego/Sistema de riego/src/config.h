@@ -1,3 +1,7 @@
+//
+//  Autor: Valerio Colantonio
+//  Fichero de configuración de las constantes globales
+//
 
 #define BLE_DEVICE_NAME "SISTEMA RIEGO"
 
@@ -5,6 +9,7 @@
 
 #define START_WATERING_CHAR_UUID "2bebc6ee-61b7-40f3-a7cb-b2cbd2627e4b"
 
+// Definición de los GPIO utilizados en el ESP32
 #define OUTPUT_0 27
 #define OUTPUT_1 26
 #define OUTPUT_2 25

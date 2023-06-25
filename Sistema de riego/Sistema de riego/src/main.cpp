@@ -1,7 +1,12 @@
+//
+//  Autor: Valerio Colantonio
+//
+
 #include "ble.h"
 #include "config.h"
 #include <Arduino.h>
 
+// Función de setup del programa
 void setup() {
   // Inicialización de pines de salida
   pinMode(OUTPUT_0, OUTPUT);
@@ -18,7 +23,5 @@ void setup() {
   bleSetup();
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-  bleLoop();
-}
+// Función de loop del programa
+void loop() { bleLoop(); }

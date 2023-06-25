@@ -1,3 +1,10 @@
+//////////////////////////////////////////////
+///   Author: Valerio Colantonio
+///   Gestión del menú
+//    Para la gestión de las páginas se ha implementado el patrón de
+//    programación State: todas las clases heredan de la clase base PageState
+//////////////////////////////////////////////
+
 #ifndef PAGESTATE_H
 #define PAGESTATE_H
 
@@ -57,7 +64,7 @@ protected:
   String menuOtionsStr[5];
 };
 
-// Implementación de un estado concreto
+// Implementación de un estado concreto: MainPageState
 class MainPageState : public PageState {
 public:
   MainPageState();
@@ -66,7 +73,7 @@ public:
   void loopPageState() override;
 };
 
-// Implementación de un estado concreto
+// Implementación de un estado concreto: MainMenuState
 class MainMenuState : public PageState {
 public:
   MainMenuState();
@@ -74,7 +81,7 @@ public:
   void display() override;
 };
 
-// Implementación de un estado concreto
+// Implementación de un estado concreto: MoistureMenuState
 class MoistureMenuState : public PageState {
 public:
   MoistureMenuState();
@@ -82,7 +89,7 @@ public:
   void display() override;
 };
 
-// Implementación de un estado concreto
+// Implementación de un estado concreto: IrrigationMenuState
 class IrrigationMenuState : public PageState {
 public:
   IrrigationMenuState();
@@ -91,7 +98,7 @@ public:
   // void loopPageState() override;
 };
 
-// Implementación de un estado concreto
+// Implementación de un estado concreto: ThresholdPageState
 class ThresholdPageState : public PageState {
 public:
   ThresholdPageState();
@@ -99,7 +106,7 @@ public:
   void display() override;
 };
 
-// Implementación de un estado concreto
+// Implementación de un estado concreto: CalibrationPageState
 class CalibrationPageState : public PageState {
 public:
   CalibrationPageState(const char *pagName, const char *characteristic);
@@ -112,7 +119,7 @@ private:
   const char *characteristic;
 };
 
-// Implementación de SelectOutputPageState
+// Implementación de SelectOutputPageState: SelectOutputPageState
 class SelectOutputPageState : public PageState {
 public:
   SelectOutputPageState();
@@ -120,7 +127,7 @@ public:
   void display();
 };
 
-// Implementación de un estado concreto
+// Implementación de un estado concreto: IrrigationCalibMenuState
 class IrrigationCalibMenuState : public PageState {
 public:
   IrrigationCalibMenuState(short *ptrMenuSelection);
@@ -133,7 +140,7 @@ private:
   short irrigationSubmenuIndex = 0;
 };
 
-// Implementación de SelectOutputPageState
+// Implementación de un estado concreto: SetTimePageState
 class SetTimePageState : public PageState {
 public:
   SetTimePageState();
@@ -146,7 +153,7 @@ private:
   short irrigationSubmenuIndex = 0;
 };
 
-// Implementación de SelectOutputPageState
+// Implementación de un estado concreto: EnableHumidityCheckPageState
 class EnableHumidityCheckPageState : public PageState {
 public:
   EnableHumidityCheckPageState();

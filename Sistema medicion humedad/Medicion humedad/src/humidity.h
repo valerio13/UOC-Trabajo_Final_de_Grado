@@ -1,3 +1,9 @@
+//
+//  Autor: Valerio Colantonio
+//  Módulo de lectura de humedad
+//  Gestión de la humedad
+//
+
 #ifndef HUMIDITY_H
 #define HUMIDITY_H
 

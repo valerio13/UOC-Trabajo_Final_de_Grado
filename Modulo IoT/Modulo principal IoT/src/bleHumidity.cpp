@@ -1,5 +1,6 @@
 /*
 //  Módulo IoT: BLE client
+//  Gestión de la comunicación BLE con el módulo de medición de humedad
 */
 
 #include "config.h"
@@ -17,6 +18,7 @@ static BLERemoteCharacteristic *pRemoteDryCalibCharacteristic;
 
 static BLEAdvertisedDevice *myDevice;
 
+// Callback que se ejecuta en caso de conexión/desconexión
 class HumidityClientCallback : public BLEClientCallbacks {
   void onConnect(BLEClient *pclient) {}
   void onDisconnect(BLEClient *pclient) {
@@ -25,19 +27,18 @@ class HumidityClientCallback : public BLEClientCallbacks {
   }
 };
 
+// Función de conexión con el módulo de humedad que funciona como servidor
 bool connectToHumidityServer() {
   Serial.print("Forming a connection to ");
   Serial.println(myDevice->getAddress().toString().c_str());
 
+  // Se crea el cliente para conectarse al servidor
   BLEClient *pClient = BLEDevice::createClient();
   pClient->setClientCallbacks(new HumidityClientCallback());
   Serial.println(" - Created client");
-  // Connect to the remove BLE Server.
-  pClient->connect(myDevice); // if you pass BLEAdvertisedDevice instead of
-                              // address, it will be recognized type of peer
-                              // device address (public or private)
+  pClient->connect(myDevice);
   Serial.println(" - Connected to server");
-  // Obtain a reference to the service we are after in the remote BLE server.
+
   BLERemoteService *pRemoteService = pClient->getService(HUM_SERVICE_UUID);
   if (pRemoteService == nullptr) {
     Serial.print("Failed to find our service UUID: ");
@@ -45,9 +46,8 @@ bool connectToHumidityServer() {
     pClient->disconnect();
     return false;
   }
+
   Serial.println(" - Found our service");
-  // Obtain a reference to the characteristic in the service of the remote BLE
-  // server.
   pRemoteHumCharacteristic = pRemoteService->getCharacteristic(HUM_CHAR_UUID);
   pRemoteHumCalibCharacteristic =
       pRemoteService->getCharacteristic(MAX_CALIB_HUM_CHAR_UUID);
@@ -72,7 +72,7 @@ bool connectToHumidityServer() {
   }
 
   Serial.println(" - Found all characteristics");
-  // Read the value of the characteristic.
+  // Lectura de la característica de humedad
   if (pRemoteHumCharacteristic->canRead()) {
     std::string value = pRemoteHumCharacteristic->readValue();
     Serial.print("The characteristic value was: ");
@@ -82,6 +82,7 @@ bool connectToHumidityServer() {
   return true;
 }
 
+// Callback que se ejecuta cuando el dispositivo ha sido encontrado
 class HumidityAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
     Serial.print("BLE Advertised Device found: ");
@@ -92,10 +93,11 @@ class HumidityAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
       doScan = true;
-    } // Found our server
-  }   // onResult
-};    // HumidityAdvertisedDeviceCallbacks
+    }
+  }
+};
 
+// Función de setup
 void setupBleHumidity() {
   Serial.println("Starting BLE Humidity Client...");
   BLEDevice::init("");
@@ -107,12 +109,11 @@ void setupBleHumidity() {
   pBLEScan->setWindow(449);
   pBLEScan->setActiveScan(true);
   pBLEScan->start(5, false);
-} // End of setup.
+}
 
-// This is the Arduino main loop function.
+// Función de lectura de humedad
 int getBleHumidityData() {
-  Serial.println("getBleHumidityData()");
-
+  // Se conecta primero con el servidor
   if (doConnect == true) {
     if (connectToHumidityServer()) {
       Serial.println("We are now connected to the BLE Server.");
@@ -127,6 +128,7 @@ int getBleHumidityData() {
 
   if (connected) {
     if (pRemoteHumCharacteristic->canRead()) {
+      // Lectura de la característica de humedad
       value = pRemoteHumCharacteristic->readUInt16();
       Serial.print("Humedad: ");
       Serial.println(value);
@@ -142,7 +144,6 @@ int getBleHumidityData() {
 
 // Lee el estado de la calibración
 String getHumidityCalibData(String bleCalibCharacteristic) {
-  Serial.print("getHumidityCalibData: ");
   Serial.println(bleCalibCharacteristic.c_str());
 
   if (doConnect == true) {

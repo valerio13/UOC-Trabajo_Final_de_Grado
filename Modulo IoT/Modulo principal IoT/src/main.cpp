@@ -1,9 +1,9 @@
 //////////////////////////////////////////////
-///   Author: Valerio Colantonio
+///   Autor: Valerio Colantonio
 //////////////////////////////////////////////
 
-#include "OledDisplay.h" //Included the file to drive the Oled display
-#include "PageState.h"   //Included the file to manage the menu
+#include "OledDisplay.h"
+#include "PageState.h"
 #include "bleHumidity.h"
 #include "bleIrrigation.h"
 #include "config.h"
@@ -11,14 +11,15 @@
 #include <Arduino.h>
 #include <Preferences.h>
 
-#define DELAY 500 // Define the delay time used in the loop method
+#define DELAY 500
 #define PRESS_BUTTON_DELAY                                                     \
-  500 // Define the delay time used in the read buttons loop
+  500 // Define el delay usado en la lectura de los botones
 
+// Definición de funciones
 void MonitoringButtons();
 void checkHumidity();
 
-// Variables globales
+// Variables globales, principalmente las páginas del menú
 MainPageState mainPageState;
 MainMenuState mainMenuState;
 MoistureMenuState moistureMenuState;
@@ -43,7 +44,9 @@ SetTimePageState setTimePageState;
 
 PageState *currentPageState = &mainPageState;
 
-// Declaración de la variable global externa
+// Declaración de la variable global externa que contiene la página que se está
+// visualizando. Para la gestión de las páginas se ha implementado el patrón de
+// programación State.
 extern PageState *currentPageState;
 
 Preferences preferences;
@@ -51,9 +54,9 @@ int humidityThreshold = 50;
 int humidityValue = 0;
 bool humidityCheckEnabled;
 
-// The Setup method
+// Función de Setup
 void setup() {
-  Serial.begin(921600); // Setting the serial speed
+  Serial.begin(921600);
   Serial.println("Módulo IoT");
 
   preferences.begin("my-app", false); // inicializar preferences
@@ -63,13 +66,14 @@ void setup() {
   Serial.print("humidityThreshold:");
   Serial.println(humidityThreshold);
 
-  setupDisplay();                        // Call the setup display method
-  displayInitialMessage("Iniciando..."); // Call the display initial
-                                         // message method
-  pinMode(BTN_UP, INPUT);                // Setup input for left button
-  pinMode(BTN_DOWN, INPUT);              // Setup input for right button
-  pinMode(BTN_ENTER, INPUT);             // Setup input for right button
-  pinMode(BTN_ESC, INPUT);               // Setup input for right button
+  setupDisplay();
+  displayInitialMessage("Iniciando...");
+
+  // Setup de los botones de navegación
+  pinMode(BTN_UP, INPUT);
+  pinMode(BTN_DOWN, INPUT);
+  pinMode(BTN_ENTER, INPUT);
+  pinMode(BTN_ESC, INPUT);
 
   setupBleHumidity();
   setupBleIrrigation();
@@ -78,23 +82,23 @@ void setup() {
   Serial.println("fin setup");
 }
 
-// The loop method
+// Función de loop
 void loop() {
-  MonitoringButtons();      // Call the monitoring buttons method
-  static long lastTime = 0; // Variable that stores the last time in miliseconds
-                            // that the app enters in the "if" statement below.
+  MonitoringButtons();
+  // Lógica de delay para no usar la función delay() que bloquea la ejecución
+  static long lastTime = 0;
   long now = millis();
   if (abs(now - lastTime) > DELAY) {
 
-    lastTime = now; // Stores the last time that this "if" was executed.
+    lastTime = now; // Almacena la última vez que se ejecutó este "if".
     currentPageState->loopPageState();
   }
 
-  loopMqtt();
+  loopMqtt(); // Ciclo de ejecución del MQTT
 }
 
-// Method that monitoring the buttons and desides what to do in base of the
-// button pressed.
+// Método que monitorea los botones y decide qué hacer en base al
+// botón presionado.
 void MonitoringButtons() {
   static long lastTime = 0;
   long now = millis();
@@ -131,7 +135,9 @@ void MonitoringButtons() {
     btnEscStateBefore = btnEscStateNow;
 
     if (buttonPressed != BTN_NONE) {
+      // La clase memorizada en currentPageState gestiona el botón presionado
       currentPageState->handleInput(buttonPressed);
+      // y lo que se visualiza en la pantalla
       currentPageState->display();
     }
   }

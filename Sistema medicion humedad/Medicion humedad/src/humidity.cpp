@@ -1,3 +1,9 @@
+//
+//  Autor: Valerio Colantonio
+//  Módulo de lectura de humedad
+//  Gestión de la humedad
+//
+
 #include <Preferences.h>
 #include <config.h>
 #include <humidity.h>
@@ -13,10 +19,12 @@ int valueIndex = 0; // Índice del array donde se almacenará el siguiente valor
 int sum = 0;        // Variable que almacena la suma de los valores
 int humAveragePercent = 0;
 
+// GPIO del input del sensor de humedad
 const int humSensorPin = 32;
 
 float getAverage(int newValue);
 
+// Función de setup
 void humiditySetup() {
   for (int i = 0; i < MEDIA_NUM_VALUES; i++) {
     getHumidityRead();
@@ -25,6 +33,7 @@ void humiditySetup() {
   preferences.begin("my-app",
                     false); // inicializar preferences con el nombre "my-app"
 
+  // Se recuperan las calibraciones memorizadas
   maxHumidity = preferences.getInt("maxHumidity", 1300);
   maxDryness = preferences.getInt("maxDryness", 3400);
 
@@ -35,10 +44,12 @@ void humiditySetup() {
   Serial.println(maxDryness);
 }
 
+// Función de calibración de la máxima humedad
 bool calibrateMaxHumidity() {
   Serial.println("Calibrando humedad máxima...");
 
   maxHumidity = 99999;
+  // Menor de 20 mediciones de humedad
   for (int i = 0; i < 20; i++) {
     int humidityRead = analogRead(humSensorPin);
     Serial.println(humidityRead);
@@ -55,10 +66,12 @@ bool calibrateMaxHumidity() {
   }
 }
 
+// Función de calibración de la máxima sequedad
 bool calibrateMaxDryness() {
   Serial.println("Calibrando sequedad máxima...");
 
   maxDryness = 0;
+  // Mayor de 20 mediciones de humedad
   for (int i = 0; i < 20; i++) {
     int humidityRead = analogRead(humSensorPin);
     Serial.println(humidityRead);
@@ -75,9 +88,12 @@ bool calibrateMaxDryness() {
   }
 }
 
+// Lectura del input del sensor de humedad
 void getHumidityRead() {
   int humidityRead = analogRead(humSensorPin);
+  // Cálculo de la media
   int humAverage = getAverage(humidityRead);
+  // Converción a porcentaje de humedad
   humAveragePercent = (int)map(humAverage, maxDryness, maxHumidity, 0, 100);
 
   if (humAveragePercent > 100 || humAveragePercent < 0) {
@@ -90,6 +106,7 @@ void getHumidityRead() {
   Serial.println(humAveragePercent);
 }
 
+// Cálculo de la media
 float getAverage(int newValue) {
   values[valueIndex] = newValue; // Almacenamiento del valor en el array
   valueIndex++; // Incremento del índice para el siguiente valor
@@ -105,6 +122,7 @@ float getAverage(int newValue) {
     sum += values[i]; // Acumulación de los valores en la variable suma
   }
 
+  // Cálculo de la media
   float average = sum / MEDIA_NUM_VALUES;
 
   Serial.print("Humedad media: ");

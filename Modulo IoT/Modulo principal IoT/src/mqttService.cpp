@@ -1,3 +1,8 @@
+/*
+//  Módulo IoT: cliente MQTT
+//  Gestión de la comunicación MQTT con el servidor
+*/
+
 #include "mqttService.h"
 #include "networkConfig.h"
 #include <PubSubClient.h>
@@ -6,16 +11,19 @@
 WiFiClient espClient;
 PubSubClient client(espClient);
 
+// Declaración de las funciones que luego serán implementadas abajo
 void setup_wifi();
 void callback(char *topic, byte *message, unsigned int length);
 void reconnect();
 
+// Función de setup de la comunicación
 void setupMqtt() {
   setup_wifi();
   client.setServer(MQTT_SERVER, 1883);
   client.setCallback(callback);
 }
 
+// Función de loop
 void loopMqtt() {
   if (!client.connected()) {
     reconnect();
@@ -23,6 +31,7 @@ void loopMqtt() {
   client.loop();
 }
 
+// Función que publica los datos en en servido
 void publishMqttData(short value) {
   if (!client.connected()) {
     reconnect();
@@ -36,6 +45,7 @@ void publishMqttData(short value) {
   client.publish("moisture1", humString);
 }
 
+// Setup de la conexión Wifi
 void setup_wifi() {
   delay(10);
   // We start by connecting to a WiFi network
@@ -55,6 +65,7 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
+// Callback que se ejecuta cuando un dato viene recibido
 void callback(char *topic, byte *message, unsigned int length) {
   Serial.print("Message arrived on topic: ");
   Serial.print(topic);
@@ -68,11 +79,10 @@ void callback(char *topic, byte *message, unsigned int length) {
   Serial.println();
 }
 
+// Función de reconexión
 void reconnect() {
-  // Loop until we're reconnected
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection...");
-    // Attempt to connect
     if (client.connect(ID, USER, PASSCODE)) {
       Serial.println("connected");
       // Subscribe
@@ -81,7 +91,6 @@ void reconnect() {
       Serial.print("failed, rc=");
       Serial.print(client.state());
       Serial.println(" try again in 5 seconds");
-      // Wait 5 seconds before retrying
       delay(5000);
     }
   }

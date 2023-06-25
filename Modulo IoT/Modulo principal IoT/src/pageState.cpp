@@ -1,3 +1,8 @@
+//////////////////////////////////////////////
+///   Author: Valerio Colantonio
+///   Gestión del menú
+//////////////////////////////////////////////
+
 #include "PageState.h"
 #include "OledDisplay.h"
 #include "bleHumidity.h"
@@ -13,6 +18,7 @@ extern PageState *currentPageState;
 extern bool humidityCheckEnabled;
 extern int humidityValue;
 
+// Definición de las funciones que serán implementadas abajo
 void checkHumidity();
 void displayHumidityData();
 String getIrrigationCalibMenuStateTitle(short irrigationSubmenuIndex);
@@ -20,6 +26,7 @@ short getIrrigationCalibTime(short irrigationSubmenuIndex);
 void setBackIrrigationCalibMenuState(short irrigationSubmenuIndex);
 void saveIrrigationCalibTime(short irrigationSubmenuIndex);
 
+// Variables internas de este file
 int tempThreshold;
 String calibState;
 bool calibStarted = false;
@@ -30,12 +37,14 @@ RunState runState = IDLE;
 // Implementación de MainPageState
 MainPageState::MainPageState() {}
 
+// Gestión de las entradas
 void MainPageState::handleInput(int input) {
   if (input == BTN_ENTER || input == BTN_ESC) {
     currentPageState = &mainMenuState;
   }
 }
 
+// Gestión de la visualización de los datos
 void MainPageState::display() { displayHumidityData(); }
 
 void MainPageState::loopPageState() { checkHumidity(); }
@@ -52,7 +61,7 @@ MainMenuState::MainMenuState() {
   }
 }
 
-// Implementación de MainMenuState
+// Gestión de las entradas
 void MainMenuState::handleInput(int input) {
   if (input == BTN_DOWN) {
     menuIndex++;
@@ -84,6 +93,7 @@ void MainMenuState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void MainMenuState::display() {
   displayMenu(name, menuOtionsStr, menuSize, menuIndex);
 }
@@ -100,7 +110,7 @@ MoistureMenuState::MoistureMenuState() {
   }
 }
 
-// Implementación de MoistureMenuState
+// Gestión de las entradas
 void MoistureMenuState::handleInput(int input) {
   if (input == BTN_DOWN) {
     menuIndex++;
@@ -133,6 +143,7 @@ void MoistureMenuState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void MoistureMenuState::display() {
   displayMenu(name, menuOtionsStr, menuSize, menuIndex);
 }
@@ -148,6 +159,7 @@ IrrigationMenuState::IrrigationMenuState() {
   }
 }
 
+// Gestión de las entradas
 void IrrigationMenuState::handleInput(int input) {
   if (input == BTN_DOWN) {
     menuIndex++;
@@ -188,6 +200,7 @@ void IrrigationMenuState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void IrrigationMenuState::display() {
   displayMenu(name + " - " + irrigationOutput, menuOtionsStr, menuSize,
               menuIndex);
@@ -198,6 +211,7 @@ ThresholdPageState::ThresholdPageState() { name = "Configuracion umbral"; }
 
 bool thrHandleInputFirstTime = true;
 
+// Gestión de las entradas
 void ThresholdPageState::handleInput(int input) {
   if (thrHandleInputFirstTime)
     tempThreshold = humidityThreshold;
@@ -226,6 +240,7 @@ void ThresholdPageState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void ThresholdPageState::display() {
   String description = "Nuevo umbral:";
   if (thrHandleInputFirstTime)
@@ -235,11 +250,12 @@ void ThresholdPageState::display() {
   displaySubMenuStr(name, description, String(tempThreshold));
 }
 
-// Implementación de IrrigationMenuState
+// Implementación de CalibrationPageState
 CalibrationPageState::CalibrationPageState(const char *pagName,
                                            const char *characteristic)
     : name(pagName), characteristic(characteristic) {}
 
+// Gestión de las entradas
 void CalibrationPageState::handleInput(int input) {
   if (input == BTN_ENTER && calibStarted == false) {
     if (setHumidityCalibData(String(characteristic))) {
@@ -256,6 +272,7 @@ void CalibrationPageState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void CalibrationPageState::display() {
   String description;
   if (!calibStarted) {
@@ -284,6 +301,7 @@ void CalibrationPageState::loopPageState() {
 // Implementación de SelectOutputPageState
 SelectOutputPageState::SelectOutputPageState() { name = "Configurar salida"; }
 
+// Gestión de las entradas
 void SelectOutputPageState::handleInput(int input) {
   if (input == BTN_UP) {
     irrigationOutput++;
@@ -303,6 +321,7 @@ void SelectOutputPageState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void SelectOutputPageState::display() {
   String description = "Seleccionar salida:";
   displaySubMenuStr(name, description, String(irrigationOutput));
@@ -333,6 +352,7 @@ void IrrigationCalibMenuState::pageInitialState(short data) {
   }
 }
 
+// Gestión de las entradas
 void IrrigationCalibMenuState::handleInput(int input) {
   if (input == BTN_DOWN) {
     menuIndex++;
@@ -366,6 +386,7 @@ void IrrigationCalibMenuState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void IrrigationCalibMenuState::display() {
   displayMenu(getIrrigationCalibMenuStateTitle(irrigationSubmenuIndex) +
                   String(" - Sal.") + String(irrigationOutput),
@@ -380,6 +401,7 @@ void SetTimePageState::pageInitialState(short data) {
   tempTime = activeIrrigationTime;
 }
 
+// Gestión de las entradas
 void SetTimePageState::handleInput(int input) {
   if (input == BTN_UP) {
     tempTime++;
@@ -399,6 +421,7 @@ void SetTimePageState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void SetTimePageState::display() {
   String description = "Seleccionar tiempo:";
   displaySubMenuStr(getIrrigationCalibMenuStateTitle(irrigationSubmenuIndex) +
@@ -420,15 +443,8 @@ void checkHumidity() {
       displayMessage("Conectando con el", "sensor de humedad", "");
 
       delay(1000);
-      bool connected = connectToHumidityServer();
-      if (connected) {
-        humidityValue = getBleHumidityData();
-        disconnectFromHumidityServer();
-        displayHumidityData();
-      } else {
-        displayErrorMessage("Error de conexión", "con el sensor de humedad",
-                            "");
-      }
+      humidityValue = getBleHumidityData();
+      displayHumidityData();
     }
   }
 }
@@ -442,16 +458,19 @@ void displayHumidityData() {
   line2.concat(humidityValue);
   line2.concat("%");
 
+  // Controla si el valor de humedad está por encima del umbral
+  // En caso de OK: se muestra la lectura de humedad y el dato de umbral
   if (humidityValue > humidityThreshold) {
     displayMessage("Lectura de humedad", line1, line2);
   } else {
+    // En caso de NOK: se muestra el error y se activa el riego
     displayErrorMessage("Agua para la planta!", line1, line2);
     short irrigationTime = getIrrigationCalibTime(offsetMenuOption);
     irrigationTime += getIrrigationCalibTime(calibMenuOption);
     Serial.print("irrigationTime: ");
     Serial.println(irrigationTime);
-
-    // setIrrigationData(irrigationOutput, activeIrrigationTime);
+    delay(3000);
+    setIrrigationData(irrigationOutput, activeIrrigationTime);
   }
 }
 
@@ -472,6 +491,7 @@ String getIrrigationCalibMenuStateTitle(short irrigationSubmenuIndex) {
   }
 }
 
+// Gestión de la opción de navegar hacia atrás
 void setBackIrrigationCalibMenuState(short irrigationSubmenuIndex) {
   switch (irrigationSubmenuIndex) {
   case 0:
@@ -489,6 +509,7 @@ void setBackIrrigationCalibMenuState(short irrigationSubmenuIndex) {
   }
 }
 
+// Recupera el dato del tiempo de riego guardado para ese determinado output
 short getIrrigationCalibTime(short irrigationSubmenuIndex) {
   String key;
 
@@ -510,6 +531,7 @@ short getIrrigationCalibTime(short irrigationSubmenuIndex) {
   }
 }
 
+// Guarda el dato del tiempo de riego para ese determinado output
 void saveIrrigationCalibTime(short irrigationSubmenuIndex) {
   String key;
 
@@ -528,11 +550,12 @@ void saveIrrigationCalibTime(short irrigationSubmenuIndex) {
   delay(3000);
 }
 
-// Implementación de SelectOutputPageState
+// Implementación de EnableHumidityCheckPageState
 EnableHumidityCheckPageState::EnableHumidityCheckPageState() {
   name = "Control humedad";
 }
 
+// Gestión de las entradas
 void EnableHumidityCheckPageState::handleInput(int input) {
   if (input == BTN_UP || input == BTN_DOWN) {
     humidityCheckEnabled = !humidityCheckEnabled;
@@ -548,6 +571,7 @@ void EnableHumidityCheckPageState::handleInput(int input) {
   }
 }
 
+// Gestión de la visualización de los datos
 void EnableHumidityCheckPageState::display() {
   String description;
   if (humidityCheckEnabled)

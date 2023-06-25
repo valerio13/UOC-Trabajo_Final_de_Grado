@@ -1,170 +1,155 @@
 //////////////////////////////////////////////
 ///   Author: Valerio Colantonio
+///   Gestión del display
 //////////////////////////////////////////////
 
 #include "config.h"
-#include <Adafruit_GFX.h> //Library for graphic displays.
+#include <Adafruit_GFX.h>
 #include <Adafruit_SH1106.h>
 
 Adafruit_SH1106 oled(OLED_SDA, OLED_SCL);
 
-static uint16_t initialXPos = 0;       // Initial x position.
-static uint16_t Yoffset = 13;          // Y offset, used in the lines display.
-static uint16_t firstLineYoffset = 16; // First line Y offset.
+// Constantes de coordinadas del display
+static uint16_t initialXPos = 0;
+static uint16_t Yoffset = 13;
+static uint16_t firstLineYoffset = 16;
 
-// Method that setup the display at Arduino start.
+// Método que configura la pantalla al inicio de Arduino.
 void setupDisplay() {
-  Wire.begin(); // Initialize I2C bus
+  Wire.begin(); // Inicializar bus I2C
   oled.begin(SH1106_SWITCHCAPVCC, OLED_I2C_ADDRESS);
   oled.clearDisplay();
 }
 
-// Method that displays the initial message.
+// Método que muestra el mensaje inicial.
 void displayInitialMessage(String message) {
-  oled.clearDisplay(); // Clean the screen
-  oled.setTextColor(
-      WHITE); // Set the text color. White is the color of the screen in this
-              // area (first two rows are yellow, the others blue).
-  oled.setCursor(0, 0); // Locate the cursor at start of coordinates 0,0.
-  oled.setTextSize(1);  // Set text size to 1.
-  oled.print(message);  // Set the message that will be displayed on the screen.
-  oled.display();       // Displays everything previously set on the screen.
+  oled.clearDisplay();
+  oled.setTextColor(WHITE);
+  oled.setCursor(0, 0);
+  oled.setTextSize(1);
+  oled.print(message);
+  oled.display();
 }
 
-// Method that displays generic messages.
+// Método que muestra mensajes genéricos.
+// Recibe tres strings y las imprime en tres líneas del display distintas
 void displayMessage(String line1, String line2, String line3) {
-  oled.clearDisplay();      // Clean the screen.
-  oled.setTextColor(WHITE); // Set the text color.
+  oled.clearDisplay();
+  oled.setTextColor(WHITE);
 
-  oled.setCursor(initialXPos, 0); // Locate cursor at given coordinates.
-  oled.setTextSize(1);            // Set text size to 2.
-  oled.print(
-      line1); // Set the text that will be displayed on the given screen line.
+  oled.setCursor(initialXPos, 0);
+  oled.setTextSize(1);
+  oled.print(line1);
 
-  oled.setCursor(
-      initialXPos,
-      firstLineYoffset); // Locate cursor at given coordinates. It is used the Y
-                         // offset to calculate the Y line position.
-  oled.setTextSize(1);   // Set text size to 2.
-  oled.print(
-      line2); // Set the text that will be displayed on the given screen line.
+  oled.setCursor(initialXPos, firstLineYoffset);
 
-  oled.setCursor(initialXPos,
-                 firstLineYoffset +
-                     Yoffset *
-                         2); // Locate cursor at given coordinates. It is used
-                             // the Y offset to calculate the Y line position.
-  oled.setTextSize(1);       // Set text size to 2.
-  oled.print(
-      line3); // Set the text that will be displayed on the given screen line.
+  oled.setTextSize(1);
+  oled.print(line2);
 
-  oled.display(); // Displays everything previously set on the screen.
+  oled.setCursor(initialXPos, firstLineYoffset + Yoffset * 2);
+
+  oled.setTextSize(1);
+  oled.print(line3);
+
+  oled.display();
 }
 
-// Method that displays the error messages.
+// Método que muestra los mensajes de error.
 void displayErrorMessage(String line1, String line2, String line3) {
-  oled.clearDisplay();      // Clean the screen.
-  oled.setTextColor(WHITE); // Set the text color.
+  oled.clearDisplay();
+  oled.setTextColor(WHITE);
 
-  oled.setCursor(initialXPos, 0); // Locate cursor at given coordinates.
-  oled.setTextSize(1);            // Set text size to 1.
-  oled.print(
-      line1); // Set the text that will be displayed on the given screen line.
+  oled.setCursor(initialXPos, 0);
+  oled.setTextSize(1);
+  oled.print(line1);
 
-  oled.setCursor(initialXPos, 16); // Locate cursor at given coordinates.
-  oled.setTextSize(1);             // Set text size to 1.
-  oled.print(
-      line2); // Set the text that will be displayed on the given screen line.
+  oled.setCursor(initialXPos, 16);
+  oled.setTextSize(1);
+  oled.print(line2);
 
-  oled.setCursor(initialXPos, 32); // Locate cursor at given coordinates.
-  oled.setTextSize(1);             // Set text size to 2.
-  oled.print(
-      line3); // Set the text that will be displayed on the given screen line.
+  oled.setCursor(initialXPos, 32);
+  oled.setTextSize(1);
+  oled.print(line3);
 
-  // The following lines are to draw a sad face as emoji.
-  int x = 108; // Center X of face.
-  int y = 45;  // Center Y of face.
+  // Las siguientes líneas son para dibujar una cara triste como emoji.
+  int x = 108;
+  int y = 45;
   oled.fillCircle(x, y, 12,
-                  WHITE); // Draw the circle of the sad face. It is white.
-  oled.drawCircle(x, y + 11, 8, BLACK);    // Draw the sad face mouth.
-  oled.drawCircle(x, y + 12, 8, BLACK);    // Draw the sad face mouth. It is
-                                           // double.
-  oled.fillCircle(x - 5, y - 3, 2, BLACK); // Draw the left eye.
-  oled.fillCircle(x + 5, y - 3, 2, BLACK); // Draw the right eye.
-  oled.drawCircle(x, y, 10,
-                  WHITE); // Draw again a empy circle to close the first one.
+                  WHITE); // Dibuja el círculo de la cara triste. Es blanco.
+  oled.drawCircle(x, y + 11, 8,
+                  BLACK); // Dibuja el circulo de la cara triste. Es blanco.
+  oled.drawCircle(x, y + 12, 8, BLACK);
+  oled.fillCircle(x - 5, y - 3, 2, BLACK); // Dibuja el ojo izquierdo.
+  oled.fillCircle(x + 5, y - 3, 2, BLACK); // Dibuja el ojo derecho.
+  oled.drawCircle(x, y, 10, WHITE);
 
-  oled.display(); // Displays everything previously set on the screen.
+  oled.display();
 }
 
-// Method that displays the main menu.
+// Método que muestra el menú principal.
 void displayMenu(String title, String *pdata, byte length,
                  byte selectedOption) {
-  oled.clearDisplay(); // Clean the screen.
+  oled.clearDisplay();
 
-  for (int i = 0; i < length; i++) { // Loop to display the menu options.
-    if (selectedOption == i) {       // If the index is the selected option...
+  for (int i = 0; i < length;
+       i++) { // Bucle para mostrar las opciones del menú.
+    if (selectedOption == i) {
       oled.fillRoundRect(0, firstLineYoffset - 1 + Yoffset * i, oled.width(), 9,
-                         4, WHITE); // Is draw a rounded filled white rectangle.
-      oled.setTextColor(BLACK);     // ANd the text color is black.
+                         4, WHITE);
+      oled.setTextColor(BLACK);
     } else {
-      oled.setTextColor(WHITE); // If the index is not the selected option, the
-                                // text color is white.
+      oled.setTextColor(WHITE);
     }
 
-    oled.setCursor(initialXPos + 5,
-                   firstLineYoffset +
-                       Yoffset * i); // Locate cursor at given coordinates.
-    oled.setTextSize(1);             // Set text size to 1.
-    oled.print(pdata[i]); // Set the text from the string array that have the
-                          // menu options text, that will be displayed on the
-                          // given screen line.
+    oled.setCursor(initialXPos + 5, firstLineYoffset + Yoffset * i);
+    oled.setTextSize(1);
+    oled.print(pdata[i]);
   }
 
   oled.fillRect(0, 0, oled.width(), 12, WHITE);
-  oled.setTextColor(BLACK); // Set the text color.
-  oled.setCursor(2, 2);     // Locate cursor at given coordinates.
-  oled.setTextSize(1);      // Set text size to 2.
-  oled.print(title);        // Set the text of the menu title.
+  oled.setTextColor(BLACK);
+  oled.setCursor(2, 2);
+  oled.setTextSize(1);
+  oled.print(title);
 
-  oled.display(); // Displays everything previously set on the screen.
+  oled.display();
 }
 
-// Method that displays the submenu page.
+// Método que muestra la página del submenú.
 void displaySubMenuStr(String subMenuTitle, String description, String value,
                        String leftOption, String rightOtion) {
-  oled.clearDisplay(); // limpia pantalla
+  oled.clearDisplay();
 
   oled.fillRect(0, 0, oled.width(), 12, WHITE);
-  oled.setTextColor(BLACK); // Set the text color.
-  oled.setCursor(2, 2);     // Locate cursor at given coordinates.
-  oled.setTextSize(1);      // Set text size to 2.
-  oled.print(subMenuTitle); // Set the page title.
+  oled.setTextColor(BLACK);
+  oled.setCursor(2, 2);
+  oled.setTextSize(1);
+  oled.print(subMenuTitle);
 
-  oled.setTextColor(WHITE); // Set the text color.
-  oled.setCursor(2, 16);    // Locate cursor at given coordinates.
-  oled.setTextSize(1);      // Set text size to 2.
-  oled.print(description);  // Set the page description.
+  oled.setTextColor(WHITE);
+  oled.setCursor(2, 16);
+  oled.setTextSize(1);
+  oled.print(description);
 
-  oled.setCursor(2, 32); // Locate cursor at given coordinates.
-  oled.setTextSize(1);   // Set text size to 2.
-  oled.print(value);     // Set the humidity value text.
+  oled.setCursor(2, 32);
+  oled.setTextSize(1);
+  oled.print(value);
 
-  oled.setTextColor(BLACK); // Set the text color to black.
-  oled.fillRect(0, 55, oled.width(), 12,
-                WHITE);   // Draw a white filled rectangle in the bottom side.
-                          // Here will be displayed the button function text.
-  oled.setCursor(5, 56);  // Locate cursor at given coordinates.
-  oled.setTextSize(1);    // Set text size to 1.
-  oled.print(leftOption); // Set the text for the left button function.
+  // Visualiza la barra inferior de color blanco con las dos opciones
+  oled.setTextColor(BLACK);
+  oled.fillRect(0, 55, oled.width(), 12, WHITE);
+  oled.setCursor(5, 56);
+  oled.setTextSize(1);
+  oled.print(leftOption);
 
-  oled.setCursor(90, 56); // Locate cursor at given coordinates.
-  oled.setTextSize(1);    // Set text size to 1.
-  oled.print(rightOtion); // Set the text for the right button function.
+  oled.setCursor(90, 56);
+  oled.setTextSize(1);
+  oled.print(rightOtion);
 
-  oled.display(); // Displays everything previously set on the screen.
+  oled.display();
 }
 
+// Visualiza la barra inferior con las opciones de guardar y salir.
 void displaySubMenuStr(String subMenuTitle, String description, String value) {
   displaySubMenuStr(subMenuTitle, description, value, "GUARDAR", "SALIR");
 }

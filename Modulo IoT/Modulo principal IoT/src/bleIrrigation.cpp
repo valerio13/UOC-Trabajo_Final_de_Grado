@@ -1,5 +1,6 @@
 /*
 //  Módulo IoT: BLE client
+// Gestión de la comunicación BLE con el módulo de riego
 */
 
 #include "config.h"
@@ -15,6 +16,7 @@ static BLERemoteCharacteristic *pRemoteIrrigationCharacteristic;
 
 static BLEAdvertisedDevice *myDevice;
 
+// Callback que se ejecuta en caso de conexión/desconexión
 class IrrigationClientCallback : public BLEClientCallbacks {
   void onConnect(BLEClient *pclient) {}
   void onDisconnect(BLEClient *pclient) {
@@ -23,6 +25,7 @@ class IrrigationClientCallback : public BLEClientCallbacks {
   }
 };
 
+// Función de conexión con el servidor de riego
 bool connectToIrrigationServer() {
   Serial.print("Forming a connection to ");
   Serial.println(myDevice->getAddress().toString().c_str());
@@ -30,12 +33,9 @@ bool connectToIrrigationServer() {
   BLEClient *pClient = BLEDevice::createClient();
   pClient->setClientCallbacks(new IrrigationClientCallback());
   Serial.println(" - Created client");
-  // Connect to the remove BLE Server.
-  pClient->connect(myDevice); // if you pass BLEAdvertisedDevice instead of
-                              // address, it will be recognized type of peer
-                              // device address (public or private)
+  // Conexión con el servidor
+  pClient->connect(myDevice);
   Serial.println(" - Connected to server");
-  // Obtain a reference to the service we are after in the remote BLE server.
   BLERemoteService *pRemoteService = pClient->getService(IRRI_SERVICE_UUID);
   if (pRemoteService == nullptr) {
     Serial.print("Failed to find our service UUID: ");
@@ -44,8 +44,7 @@ bool connectToIrrigationServer() {
     return false;
   }
   Serial.println(" - Found our service");
-  // Obtain a reference to the characteristic in the service of the remote BLE
-  // server.
+
   pRemoteIrrigationCharacteristic =
       pRemoteService->getCharacteristic(START_WATERING_CHAR_UUID);
 
@@ -61,6 +60,7 @@ bool connectToIrrigationServer() {
   return true;
 }
 
+// Callback que se ejecuta cuando el dispositivo ha sido encontrado
 class IrrigationAdvertisedDeviceCallbacks
     : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
@@ -72,10 +72,11 @@ class IrrigationAdvertisedDeviceCallbacks
       myDevice = new BLEAdvertisedDevice(advertisedDevice);
       doConnect = true;
       doScan = true;
-    } // Found our server
-  }   // onResult
-};    // IrrigationAdvertisedDeviceCallbacks
+    }
+  }
+};
 
+// Función de setup de la comunicación
 void setupBleIrrigation() {
   Serial.println("Starting BLE Irrigation Client...");
   BLEDevice::init("");
@@ -87,9 +88,9 @@ void setupBleIrrigation() {
   pBLEScan->setWindow(449);
   pBLEScan->setActiveScan(true);
   pBLEScan->start(5, false);
-} // End of setup.
+}
 
-// Activación salida
+// Activación de la salida
 bool setIrrigationData(int output, int time) {
   Serial.println("setIrriData");
 
