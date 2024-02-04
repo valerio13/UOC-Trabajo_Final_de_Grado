@@ -5,7 +5,7 @@
 //
 
 #include <Preferences.h>
-#include <config.h>
+#include <config/humidity_config.h>
 #include <humidity.h>
 
 Preferences preferences;
@@ -19,29 +19,34 @@ int valueIndex = 0; // Índice del array donde se almacenará el siguiente valor
 int sum = 0;        // Variable que almacena la suma de los valores
 int humAveragePercent = 0;
 
-// GPIO del input del sensor de humedad
-const int humSensorPin = 32;
-
 float getAverage(int newValue);
+void printSerialMessage(const char *message, float data);
+void printSerialMessage(const char *message, int data);
 
 // Función de setup
 void humiditySetup() {
-  for (int i = 0; i < MEDIA_NUM_VALUES; i++) {
-    getHumidityRead();
-  }
+  delay(1000); // TODO: borrar al final de las pruebas
+  Serial.println("-----------");
+  Serial.println("Start humidity setup");
 
-  preferences.begin("my-app",
-                    false); // inicializar preferences con el nombre "my-app"
+  // inicializar preferences con el nombre "my-app"
+  preferences.begin("my-app", false);
 
   // Se recuperan las calibraciones memorizadas
-  maxHumidity = preferences.getInt("maxHumidity", 1300);
-  maxDryness = preferences.getInt("maxDryness", 3400);
+  maxHumidity = preferences.getInt(PREFERENCES_MAX_HUMIDITY, 1300);
+  maxDryness = preferences.getInt(PREFERENCES_MAX_DRYNESS, 3400);
 
-  Serial.print("maxHumidity: ");
-  Serial.println(maxHumidity);
+  printSerialMessage("Max Humidity: ", maxHumidity);
 
-  Serial.print("maxDryness: ");
-  Serial.println(maxDryness);
+  printSerialMessage("maxDryness: ", maxDryness);
+
+  for (int i = 0; i < MEDIA_NUM_VALUES; i++) {
+    printSerialMessage("Setup n: ", i);
+    getHumidityRead();
+    delay(1000);
+  }
+  Serial.println("End humidity setup");
+  Serial.println("--------");
 }
 
 // Función de calibración de la máxima humedad
@@ -51,13 +56,13 @@ bool calibrateMaxHumidity() {
   maxHumidity = 99999;
   // Menor de 20 mediciones de humedad
   for (int i = 0; i < 20; i++) {
-    int humidityRead = analogRead(humSensorPin);
+    int humidityRead = analogRead(HUM_SENSOR_PIN);
     Serial.println(humidityRead);
     maxHumidity = min(humidityRead, maxHumidity);
     delay(1000);
   }
   if (maxHumidity < maxDryness) {
-    preferences.putInt("maxHumidity", maxHumidity);
+    preferences.putInt(PREFERENCES_MAX_HUMIDITY, maxHumidity);
     Serial.println("Calibración MaxHumidity OK");
     return true;
   } else {
@@ -73,13 +78,13 @@ bool calibrateMaxDryness() {
   maxDryness = 0;
   // Mayor de 20 mediciones de humedad
   for (int i = 0; i < 20; i++) {
-    int humidityRead = analogRead(humSensorPin);
+    int humidityRead = analogRead(HUM_SENSOR_PIN);
     Serial.println(humidityRead);
     maxDryness = max(humidityRead, maxDryness);
     delay(1000);
   }
   if (maxHumidity < maxDryness) {
-    preferences.putInt("maxDryness", maxDryness);
+    preferences.putInt(PREFERENCES_MAX_DRYNESS, maxDryness);
     Serial.println("Calibración maxDryness OK");
     return true;
   } else {
@@ -90,7 +95,7 @@ bool calibrateMaxDryness() {
 
 // Lectura del input del sensor de humedad
 void getHumidityRead() {
-  int humidityRead = analogRead(humSensorPin);
+  int humidityRead = analogRead(HUM_SENSOR_PIN);
   // Cálculo de la media
   int humAverage = getAverage(humidityRead);
   // Converción a porcentaje de humedad
@@ -117,9 +122,9 @@ float getAverage(int newValue) {
 
   sum = 0; // Reinicio de la variable que almacena la suma de los valores
 
-  for (int i = 0; i < MEDIA_NUM_VALUES;
-       i++) {         // Bucle que recorre todos los valores del array
-    sum += values[i]; // Acumulación de los valores en la variable suma
+  for (int i = 0; i < MEDIA_NUM_VALUES; i++) {
+    // Acumulación de los valores en la variable suma
+    sum += values[i];
   }
 
   // Cálculo de la media
@@ -129,4 +134,14 @@ float getAverage(int newValue) {
   Serial.println(average);
 
   return average;
+}
+
+void printSerialMessage(const char *message, float data) {
+  Serial.print(message);
+  Serial.println(data);
+}
+
+void printSerialMessage(const char *message, int data) {
+  Serial.print(message);
+  Serial.println(data);
 }

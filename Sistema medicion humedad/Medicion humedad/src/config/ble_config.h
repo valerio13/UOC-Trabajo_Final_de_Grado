@@ -4,8 +4,8 @@
 //  Constantes del módulo
 //
 
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef BLE_CONFIG_H
+#define BLE_CONFIG_H
 
 // Características BLE
 #define SERVICE_UUID "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
@@ -21,12 +21,5 @@
 
 // Nombre BLE del módulo
 #define BLE_DEVICE_NAME "SISTEMA HUMEDAD"
-
-// Constante que define el número de valores que se promediarán
-#define MEDIA_NUM_VALUES 10
-#define HUMIDITY_READ_DELAY 5000
-
-// Estado del módulo: running, calibrando humedad o sequedad
-enum AppState { RUNNING, MAX_HUM_CALIB, MAX_DRYNESS_CALIB };
 
 #endif

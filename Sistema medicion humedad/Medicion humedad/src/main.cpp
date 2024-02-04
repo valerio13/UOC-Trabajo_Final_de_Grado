@@ -10,13 +10,16 @@
 #include <BLEUtils.h>
 #include <ESP32Servo.h>
 #include <ble.h>
-#include <config.h>
+#include <config/main_config.h>
 #include <humidity.h>
 #include <sstream>
 #include <string>
 
-// GPIO output del servomotor
-const int servoPin = 18;
+/*
+  Modificaciones a realizar:
+  2 - BLE como server
+  3 - estado de configuración (config) y de utilizo normal (running)
+*/
 
 bool calibratingMin = false;
 bool calibratingMax = false;
@@ -24,29 +27,21 @@ bool calibratingMax = false;
 // Variable que define el estado actual del módulo
 AppState currentAppState = RUNNING;
 
-// Objeto que gestiona la comunicación con el servomotor
-Servo servo;
-
-// Posición del servo
-int pos = 0;
-
 BLEServer *server;
 BLECharacteristic *pHumidityCharacteristic;
 
 const char startCalibrationChar = '1';
 void executeRunning();
 void updateServoMotorPosition();
+void executeDeepSleep();
 
-// Función de setup
 void setup()
 {
   Serial.begin(921600);
-
-  // Definición del output del servomotor
-  servo.attach(servoPin, 500, 2400);
+  esp_sleep_enable_timer_wakeup(30000000);
 
   humiditySetup();
-  bleSetup();
+  // bleSetup();
 
   delay(1000);
 }
@@ -57,7 +52,8 @@ void loop() {
     executeRunning();
   }
 
-  bleLoop();
+  // bleLoop();
+  executeDeepSleep();
 
   delay(500);
 }
@@ -72,18 +68,14 @@ void executeRunning() {
     lastTime = now;
     // Lectura de la humedad
     getHumidityRead();
-    updateServoMotorPosition();
   }
 }
 
-// Nueva posición del servomotor que indica la humedad leída
-void updateServoMotorPosition() {
-  pos = map(humAveragePercent, 0, 100, 0, 180);
-  if (pos > 180) {
-    pos = 180;
-  } else if (pos < 0) {
-    pos = 0;
+void executeDeepSleep() {
+  static long lastTime = 0;
+  long now = millis();
+  if (abs(now - lastTime) > ACTIVATE_DEEP_SLEEP_AFTER_MS) {
+    Serial.println("Deep sleep");
+    esp_deep_sleep_start();
   }
-
-  servo.write(pos);
 }

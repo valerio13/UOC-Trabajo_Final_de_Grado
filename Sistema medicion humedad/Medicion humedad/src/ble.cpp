@@ -10,7 +10,8 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <ble.h>
-#include <config.h>
+#include <config/ble_config.h>
+#include <config/main_config.h>
 #include <humidity.h>
 
 BLEServer *pServer = NULL;
